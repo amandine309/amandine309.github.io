@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amandine Dejardin — Portfolio</title>
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600&display=swap" rel="stylesheet">
-  rel="stylesheet">
   <style>
     :root {
       --bordeaux: #7A1A1A;
@@ -148,8 +147,6 @@
       z-index: 2;
     }
 
-
-
     .hero-name {
       font-family: 'Clash Display', sans-serif;
       font-size: clamp(72px, 10vw, 148px);
@@ -185,15 +182,13 @@
     }
 
     .hero-meta {
-      position: absolute;
-      bottom: 82vh;
-      right: 48px;
+      position: static;
+      margin-top: 18px;
+
       display: flex;
+      justify-content: flex-end;
       align-items: center;
-      gap: 10px;
-      opacity: 0;
-      animation: fadeUp 0.4s 1.0s forwards;
-      z-index: 10;
+      gap: 18px;
     }
 
     .hero-meta p {
@@ -664,10 +659,10 @@
         <div>Amandine</div>
         <div class="line2">Dejardin <span class="star">✦</span></div>
       </h1>
-    </div>
-    <div class="hero-meta">
-      <p>EPFL Computer Science Student</p>
-      <span class="scroll-hint">Scroll for more</span>
+      <div class="hero-meta">
+        <p>EPFL Computer Science Student</p>
+        <span class="scroll-hint">Scroll for more</span>
+      </div>
     </div>
 
     <!-- VIDEO LOOP -->
