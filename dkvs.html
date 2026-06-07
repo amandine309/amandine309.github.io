@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DKVS — Amandine Dejardin</title>
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bordeaux: #7A1A1A;
+            --jaune: #E8B84B;
+            --bleu: #2f5da1;
+            --creme: #F5F0E8;
+            --brun: #5C3D1E;
+            --blanc: #ffffff;
+            --noir: #1A1008;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background: var(--blanc);
+            color: var(--noir);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* ── CURSOR ── */
+        .cursor {
+            width: 12px; height: 12px;
+            background: var(--bordeaux); border-radius: 50%;
+            position: fixed; top: 0; left: 0;
+            pointer-events: none; z-index: 9999;
+            transition: transform 0.15s ease, background 0.2s ease;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-follower {
+            width: 36px; height: 36px;
+            border: 1.5px solid var(--bordeaux); border-radius: 50%;
+            position: fixed; top: 0; left: 0;
+            pointer-events: none; z-index: 9998;
+            transition: transform 0.35s ease;
+            transform: translate(-50%, -50%); opacity: 0.5;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed; top: 20px; right: 24px;
+            display: flex; z-index: 100;
+            opacity: 0; animation: fadeDown 0.6s 0.3s forwards;
+        }
+        .nav-btn {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 15px; font-weight: 700;
+            border: none; cursor: none; text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.25s ease, filter 0.25s ease;
+        }
+        .nav-btn:hover { transform: translateY(-4px) scale(1.04); filter: brightness(0.95); }
+        .nav-home {
+            width: 110px; height: 90px; background: #f7ce53;
+            mask-image: url("shapes/home-shape.svg");
+            -webkit-mask-image: url("shapes/home-shape.svg");
+            color: var(--bleu);
+            mask-size: contain; mask-repeat: no-repeat; mask-position: center;
+        }
+        .nav-project { width: 95px; height: 90px; background: var(--bleu); color: var(--blanc); border-radius: 8px; }
+        .nav-about   { width: 95px; height: 90px; background: var(--bordeaux); color: var(--creme); border-radius: 50%; }
+
+        /* ── BACK ── */
+        .back-link {
+            position: fixed; top: 36px; left: 36px; z-index: 100;
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: 'Clash Display', sans-serif;
+            font-size: 13px; font-weight: 700;
+            color: var(--creme); text-decoration: none;
+            opacity: 0; animation: fadeDown 0.5s 0.5s forwards;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--jaune); }
+        .back-arrow { transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+        .back-link:hover .back-arrow { transform: translateX(-5px); }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 60vh;
+            background: #0d1e3a;
+            padding: 140px 56px 64px;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: flex-end;
+        }
+        .hero-label {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+            color: rgba(255,255,255,0.55); margin-bottom: 16px;
+            opacity: 0; animation: slideUp 0.6s 0.5s forwards;
+        }
+        .hero-title {
+            font-family: 'Clash Display', sans-serif;
+            font-size: clamp(60px, 10vw, 140px); font-weight: 800;
+            color: var(--blanc); line-height: 0.88; letter-spacing: -4px;
+            opacity: 0; animation: slideUp 0.9s 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        .hero-title .line2 { color: rgba(255,255,255,0.35); }
+        .hero-meta-bar {
+            display: flex; gap: 40px; margin-top: 40px;
+            padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.15);
+            opacity: 0; animation: slideUp 0.6s 0.9s forwards;
+        }
+        .hero-meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 5px; }
+        .hero-meta-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); }
+        .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hero-tag {
+            font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 100px;
+            background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); letter-spacing: 0.05em;
+        }
+
+        /* ── CONTENT ── */
+        .content { max-width: 960px; margin: 0 auto; padding: 80px 48px; }
+
+        .s-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux); opacity: 0.6; margin-bottom: 10px; }
+        .s-title {
+            font-family: 'Clash Display', sans-serif;
+            font-size: clamp(26px, 3vw, 38px); font-weight: 700;
+            color: var(--bordeaux); letter-spacing: -0.5px; line-height: 1.05; margin-bottom: 20px;
+        }
+        .s-body { font-size: 15px; line-height: 1.78; color: rgba(26,16,8,0.7); }
+        .s-body p+p { margin-top: 14px; }
+
+        .content-block {
+            margin-bottom: 80px;
+            opacity: 0; transform: translateY(32px);
+            transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+        }
+        .content-block.visible { opacity: 1; transform: translateY(0); }
+
+        /* ── TWO-COL (text + diagram) ── */
+        .split {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 48px; align-items: center; margin-top: 32px;
+        }
+        .split.flip { direction: rtl; }
+        .split.flip > * { direction: ltr; }
+
+        /* ── DIAGRAM PANEL ── */
+        .diagram {
+            background: var(--creme);
+            border-radius: 16px;
+            padding: 28px;
+        }
+        .diagram svg { width: 100%; display: block; }
+
+        /* ── ROLE BOX ── */
+        .role-box {
+            background: var(--creme);
+            border-left: 4px solid var(--bordeaux);
+            border-radius: 0 12px 12px 0;
+            padding: 24px 28px; margin: 32px 0;
+        }
+        .role-box-title {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 13px; font-weight: 700;
+            color: var(--bordeaux); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px;
+        }
+        .role-box ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .role-box li { font-size: 14px; line-height: 1.6; color: var(--brun); display: flex; gap: 10px; }
+        .role-box li::before { content: '→'; color: var(--bordeaux); font-weight: 700; flex-shrink: 0; }
+
+        /* ── STAT ROW ── */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0; }
+        .stat-card { background: var(--creme); border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-num { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 800; color: var(--bordeaux); }
+        .stat-unit { font-size: 13px; font-weight: 700; color: var(--bordeaux); opacity: 0.6; }
+        .stat-label { font-size: 11px; color: var(--brun); opacity: 0.55; margin-top: 4px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+        /* ── QUORUM CARDS ── */
+        .quorum-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+        .q-card { border-radius: 12px; padding: 24px; }
+        .q-card.dark  { background: #0d1e3a; }
+        .q-card.mid   { background: var(--bordeaux); }
+        .q-card.light { background: var(--creme); border: 1.5px solid rgba(122,26,26,0.12); }
+        .q-letter { font-family: 'Clash Display', sans-serif; font-size: 52px; font-weight: 800; line-height: 1; }
+        .q-card.dark  .q-letter { color: rgba(255,255,255,0.9); }
+        .q-card.mid   .q-letter { color: rgba(255,255,255,0.9); }
+        .q-card.light .q-letter { color: var(--bordeaux); }
+        .q-name { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 8px 0 10px; }
+        .q-card.dark  .q-name { color: rgba(255,255,255,0.45); }
+        .q-card.mid   .q-name { color: rgba(255,255,255,0.55); }
+        .q-card.light .q-name { color: var(--brun); opacity: 0.5; }
+        .q-desc { font-size: 13px; line-height: 1.65; }
+        .q-card.dark  .q-desc { color: rgba(255,255,255,0.65); }
+        .q-card.mid   .q-desc { color: rgba(255,255,255,0.75); }
+        .q-card.light .q-desc { color: var(--brun); }
+
+        /* ── PHASE TIMELINE ── */
+        .timeline { display: flex; flex-direction: column; margin-top: 28px; }
+        .phase {
+            display: grid; grid-template-columns: 64px 1fr;
+            gap: 20px; padding: 20px 0;
+            border-top: 1px solid rgba(92,61,30,0.08);
+        }
+        .phase:last-child { border-bottom: 1px solid rgba(92,61,30,0.08); }
+        .phase-week {
+            font-family: 'Clash Display', sans-serif; font-size: 11px; font-weight: 700;
+            color: var(--bordeaux); opacity: 0.4; letter-spacing: 0.06em;
+            padding-top: 3px;
+        }
+        .phase-title { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; color: var(--bordeaux); margin-bottom: 5px; }
+        .phase-desc { font-size: 13px; line-height: 1.65; color: rgba(26,16,8,0.6); }
+
+        /* ── CHALLENGE CARDS ── */
+        .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+        .challenge-card { background: var(--blanc); border: 1.5px solid rgba(122,26,26,0.1); border-radius: 12px; padding: 22px; }
+        .challenge-icon { color: var(--bleu); font-size: 20px; margin-bottom: 10px; }
+        .challenge-title { font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 700; color: var(--bordeaux); margin-bottom: 8px; }
+        .challenge-desc { font-size: 13px; line-height: 1.65; color: rgba(26,16,8,0.6); }
+
+        /* ── LEARNED ── */
+        .learned-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+        .learned-card { background: var(--creme); border-radius: 12px; padding: 20px; }
+        .learned-num { font-size: 11px; font-weight: 800; color: var(--bordeaux); opacity: 0.4; letter-spacing: 0.1em; margin-bottom: 8px; }
+        .learned-text { font-size: 14px; line-height: 1.65; color: var(--brun); }
+
+        /* ── TEAM ── */
+        .team-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .team-member { display: flex; align-items: center; gap: 10px; background: var(--creme); border-radius: 100px; padding: 8px 16px 8px 8px; }
+        .team-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--bleu); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--blanc); }
+        .team-name { font-size: 13px; font-weight: 600; color: var(--brun); }
+        .team-role { font-size: 11px; color: var(--brun); opacity: 0.5; }
+        .team-me { background: rgba(122,26,26,0.08); border: 1.5px solid rgba(122,26,26,0.2); }
+        .team-me .team-avatar { background: var(--bordeaux); }
+
+        /* ── DIVIDER ── */
+        .divider { width: 100%; height: 1px; background: rgba(92,61,30,0.1); margin: 64px 0; }
+
+        /* ── PROJECT NAV ── */
+        .project-nav { background: var(--creme); padding: 48px; display: flex; justify-content: space-between; align-items: center; }
+        .proj-nav-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
+        .proj-nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brun); opacity: 0.4; }
+        .proj-nav-name { font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 700; color: var(--bordeaux); transition: letter-spacing 0.3s ease; }
+        .proj-nav-link:hover .proj-nav-name { letter-spacing: 0.5px; }
+
+        /* ── FOOTER ── */
+        footer { background: var(--blanc); padding: 32px 48px 0; }
+        .footer-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 28px; border-bottom: 1px solid rgba(92,61,30,0.12); font-size: 14px; color: var(--brun); font-weight: 500; }
+        .footer-nav { display: flex; gap: 8px; align-items: center; }
+        .footer-nav a { color: var(--brun); text-decoration: none; font-weight: 600; }
+        .footer-nav a:hover { color: var(--bordeaux); }
+        .footer-dot { opacity: 0.4; }
+        .footer-blobs { display: flex; align-items: flex-end; height: 120px; overflow: hidden; }
+        .blob { height: 105px; flex-shrink: 0; }
+        .blob-yellow { width: 34%; background: var(--jaune); border-radius: 70px 70px 0 0; }
+        .blob-blue   { width: 34%; background: var(--bleu);  border-radius: 0; }
+        .blob-red    { width: 32%; background: #C8431A;       border-radius: 50% 50% 0 0; }
+
+        @keyframes slideUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeDown { to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .hero { padding: 120px 28px 48px; }
+            .content { padding: 48px 24px; }
+            .split { grid-template-columns: 1fr; }
+            .split.flip { direction: ltr; }
+            .stats-row { grid-template-columns: repeat(2,1fr); }
+            .quorum-row { grid-template-columns: 1fr; }
+            .challenge-grid, .learned-grid { grid-template-columns: 1fr; }
+            .project-nav { padding: 32px 24px; flex-direction: column; gap: 24px; }
+            footer { padding: 24px 24px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follower" id="follower"></div>
+
+<a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+
+<nav>
+    <a href="index.html" class="nav-btn nav-home">Home</a>
+    <a href="projects.html" class="nav-btn nav-project">Project</a>
+    <a href="about.html" class="nav-btn nav-about">About</a>
+</nav>
+
+<!-- ──────────────────── HERO ──────────────────── -->
+<section class="hero">
+    <p class="hero-label">Project 02 — CS-202 · EPFL · 2025</p>
+    <h1 class="hero-title">
+        <div>DK</div>
+        <div class="line2">VS</div>
+    </h1>
+    <div class="hero-meta-bar">
+        <div class="hero-meta-item">
+            <div class="hero-meta-label">Full name</div>
+            <div class="hero-meta-value">Distributed Key-Value Store</div>
+        </div>
+        <div class="hero-meta-item">
+            <div class="hero-meta-label">Team</div>
+            <div class="hero-meta-value">2 people · 8 weeks</div>
+        </div>
+        <div class="hero-meta-item">
+            <div class="hero-meta-label">Stack</div>
+            <div class="hero-tags">
+                <span class="hero-tag">C</span>
+                <span class="hero-tag">POSIX UDP</span>
+                <span class="hero-tag">pthreads</span>
+                <span class="hero-tag">SHA-1</span>
+                <span class="hero-tag">Consistent hashing</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ──────────────────── CONTENT ──────────────────── -->
+<div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="content-block">
+        <p class="s-label">The project</p>
+        <h2 class="s-title">A fault-tolerant distributed storage system, built from scratch in C</h2>
+        <div class="s-body">
+            <p>DKVS is a simplified implementation of <strong>Amazon Dynamo</strong>: a system that stores key-value associations redundantly across multiple servers and keeps working even when some of them fail. The interface is minimal — <code style="font-family:monospace;font-size:13px;background:var(--creme);padding:1px 6px;border-radius:3px;color:var(--bordeaux);">put(key, value)</code> and <code style="font-family:monospace;font-size:13px;background:var(--creme);padding:1px 6px;border-radius:3px;color:var(--bordeaux);">get(key)</code> — but the mechanics behind it involve consistent hashing, quorum consensus, and concurrent UDP networking.</p>
+            <p>Everything is written in C, using raw POSIX sockets and pthreads. No framework, no abstraction library. The whole system was built layer by layer over 8 weeks, each week adding one concept on top of a working system.</p>
+        </div>
+        <div class="stats-row" style="margin-top:32px;">
+            <div class="stat-card">
+                <div class="stat-num">160</div>
+                <div class="stat-unit">bit</div>
+                <div class="stat-label">SHA-1 ring</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">N·W·R</div>
+                <div class="stat-label">quorum params</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">UDP</div>
+                <div class="stat-label">transport layer</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">8</div>
+                <div class="stat-label">weeks built</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RING — text left, diagram right -->
+    <div class="content-block">
+        <p class="s-label">01 — Consistent hashing</p>
+        <h2 class="s-title">The SHA-1 ring</h2>
+        <div class="split">
+            <div>
+                <div class="s-body">
+                    <p>Both server nodes and keys are projected onto a 160-bit ring by computing their SHA-1. A node's hash is derived from the string <code style="font-family:monospace;font-size:12px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">"IP Port NodeID"</code>. To find the servers responsible for a given key, the client computes the key's SHA-1 and walks clockwise around the ring until it has found N distinct physical servers, skipping nodes that map to a server already contacted.</p>
+                    <p>This means one physical server can appear at multiple positions on the ring, spreading its responsibility across different key ranges and improving load balance.</p>
+                </div>
+                <div class="role-box" style="margin-top:24px;">
+                    <div class="role-box-title">Key facts</div>
+                    <ul>
+                        <li>Node SHA-1 is computed from <code style="font-family:monospace;font-size:11px;background:#ede8e0;padding:1px 5px;border-radius:3px;color:var(--bordeaux);">"127.0.0.1 1234 2"</code> for node 2 of server at port 1234</li>
+                        <li>Multiple nodes per server configured in <code style="font-family:monospace;font-size:11px;background:#ede8e0;padding:1px 5px;border-radius:3px;color:var(--bordeaux);">servers.txt</code></li>
+                        <li>Ring is sorted by SHA-1 at startup via <code style="font-family:monospace;font-size:11px;background:#ede8e0;padding:1px 5px;border-radius:3px;color:var(--bordeaux);">node_list_sort()</code></li>
+                        <li>Lookup wraps around the ring end back to the beginning</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="diagram">
+                <!-- SHA-1 ring SVG -->
+                <svg viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </marker>
+                    </defs>
+                    <!-- Ring -->
+                    <circle cx="160" cy="152" r="100" fill="none" stroke="#d5ccc0" stroke-width="1.5" stroke-dasharray="5 3"/>
+                    <!-- Server A node 1 (top) -->
+                    <circle cx="160" cy="52" r="10" fill="#7A1A1A" stroke="white" stroke-width="2"/>
+                    <text x="160" y="35" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">A₁</text>
+                    <!-- Server A node 2 -->
+                    <circle cx="252" cy="102" r="8" fill="#a32540" stroke="white" stroke-width="1.5"/>
+                    <text x="270" y="106" text-anchor="start" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">A₂</text>
+                    <!-- Server B node 1 -->
+                    <circle cx="260" cy="192" r="10" fill="#2f5da1" stroke="white" stroke-width="2"/>
+                    <text x="278" y="196" text-anchor="start" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">B₁</text>
+                    <!-- Server B node 2 -->
+                    <circle cx="194" cy="248" r="8" fill="#4070b8" stroke="white" stroke-width="1.5"/>
+                    <text x="198" y="265" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">B₂</text>
+                    <!-- Server C -->
+                    <circle cx="76" cy="222" r="10" fill="#5C3D1E" stroke="white" stroke-width="2"/>
+                    <text x="56" y="226" text-anchor="end" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">C₁</text>
+                    <!-- Server D -->
+                    <circle cx="64" cy="106" r="10" fill="#5C3D1E" stroke="white" stroke-width="2"/>
+                    <text x="44" y="110" text-anchor="end" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#5C3D1E">D₁</text>
+
+                    <!-- Key position (yellow dot) -->
+                    <circle cx="230" cy="68" r="6" fill="#E8B84B" stroke="#7A1A1A" stroke-width="1.5"/>
+                    <text x="246" y="62" text-anchor="start" font-family="Clash Display,sans-serif" font-size="8.5" font-weight="700" fill="#7A1A1A">"my_key"</text>
+
+                    <!-- Clockwise lookup arrow: key → A₂ -->
+                    <path d="M233 73 Q248 82 247 95" fill="none" stroke="#7A1A1A" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+                    <!-- Continuing to B₁ -->
+                    <path d="M258 110 Q264 148 260 184" fill="none" stroke="#7A1A1A" stroke-width="1" stroke-dasharray="3 2" opacity="0.45" marker-end="url(#arr)"/>
+
+                    <!-- Center label -->
+                    <text x="160" y="147" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="13" font-weight="700" fill="#7A1A1A">SHA-1</text>
+                    <text x="160" y="163" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="10" fill="#a89a8e">ring</text>
+
+                    <!-- Legend -->
+                    <circle cx="32" cy="288" r="5" fill="#7A1A1A"/>
+                    <text x="42" y="292" font-family="Clash Display,sans-serif" font-size="8.5" fill="#5C3D1E">server node</text>
+                    <circle cx="130" cy="288" r="5" fill="#E8B84B" stroke="#7A1A1A" stroke-width="1.2"/>
+                    <text x="140" y="292" font-family="Clash Display,sans-serif" font-size="8.5" fill="#5C3D1E">key position</text>
+
+                    <text x="160" y="278" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#a89a8e">clockwise lookup · N=2 distinct servers</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- QUORUM — full width cards then diagram below -->
+    <div class="content-block">
+        <p class="s-label">02 — Consensus</p>
+        <h2 class="s-title">Quorum : trading consistency for availability</h2>
+        <div class="s-body">
+            <p>Three parameters control every read and write. Their values determine how many server failures the system can absorb while still making progress.</p>
+        </div>
+        <div class="quorum-row">
+            <div class="q-card dark">
+                <div class="q-letter">N</div>
+                <div class="q-name">Replication factor</div>
+                <div class="q-desc">Maximum servers contacted per operation. Determines how many copies of each value exist in the ring.</div>
+            </div>
+            <div class="q-card mid">
+                <div class="q-letter">W</div>
+                <div class="q-name">Write quorum</div>
+                <div class="q-desc">Minimum positive acks for a successful put. With N=3 and W=2, one server failure is silently tolerated on write.</div>
+            </div>
+            <div class="q-card light">
+                <div class="q-letter">R</div>
+                <div class="q-name">Read quorum</div>
+                <div class="q-desc">Minimum identical replies for a successful get. Conflicting values are resolved by majority vote on the client side.</div>
+            </div>
+        </div>
+
+        <!-- Vote diagram -->
+        <div class="split" style="margin-top:40px;">
+            <div class="diagram">
+                <svg viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </marker>
+                    </defs>
+                    <!-- Client -->
+                    <rect x="100" y="10" width="100" height="34" rx="6" fill="#F5F0E8" stroke="#7A1A1A" stroke-width="1"/>
+                    <text x="150" y="32" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="11" font-weight="700" fill="#7A1A1A">client</text>
+                    <!-- Fan-out arrows -->
+                    <line x1="120" y1="44" x2="52" y2="84" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr2)"/>
+                    <line x1="150" y1="44" x2="150" y2="84" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr2)"/>
+                    <line x1="180" y1="44" x2="250" y2="84" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr2)"/>
+                    <!-- Server 1 -->
+                    <rect x="10"  y="86" width="82" height="36" rx="5" fill="#F5F0E8" stroke="#c0b4a8" stroke-width="0.8"/>
+                    <text x="51" y="101" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">Server 1</text>
+                    <text x="51" y="115" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#7A1A1A">"valueA"</text>
+                    <!-- Server 2 (stale) -->
+                    <rect x="109" y="86" width="82" height="36" rx="5" fill="#F5F0E8" stroke="#c0b4a8" stroke-width="0.8"/>
+                    <text x="150" y="101" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">Server 2</text>
+                    <text x="150" y="115" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8.5" fill="#a89a8e">"valueB" (stale)</text>
+                    <!-- Server 3 -->
+                    <rect x="210" y="86" width="82" height="36" rx="5" fill="#F5F0E8" stroke="#c0b4a8" stroke-width="0.8"/>
+                    <text x="251" y="101" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">Server 3</text>
+                    <text x="251" y="115" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="9" font-weight="700" fill="#7A1A1A">"valueA"</text>
+                    <!-- Reply arrows -->
+                    <line x1="51"  y1="122" x2="51"  y2="148" stroke="#7A1A1A" stroke-width="1" marker-end="url(#arr2)"/>
+                    <line x1="150" y1="122" x2="150" y2="148" stroke="#a89a8e" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr2)"/>
+                    <line x1="251" y1="122" x2="251" y2="148" stroke="#7A1A1A" stroke-width="1" marker-end="url(#arr2)"/>
+                    <!-- Vote table -->
+                    <rect x="10" y="150" width="280" height="42" rx="5" fill="rgba(122,26,26,0.06)" stroke="#7A1A1A" stroke-width="0.8"/>
+                    <text x="22" y="165" font-family="Clash Display,sans-serif" font-size="7.5" fill="#7A1A1A" letter-spacing="0.06em">VOTE TABLE</text>
+                    <text x="22" y="183" font-family="Clash Display,sans-serif" font-size="9.5" font-weight="700" fill="#5C3D1E">"valueA" → 2  ✓  R=2 reached</text>
+                    <text x="200" y="183" font-family="Clash Display,sans-serif" font-size="9" fill="#a89a8e">"valueB" → 1</text>
+                    <!-- Result -->
+                    <text x="150" y="205" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="10" font-weight="700" fill="#7A1A1A">→ OK "valueA"</text>
+                </svg>
+            </div>
+            <div>
+                <div class="s-body">
+                    <p><strong>What happens when servers disagree?</strong> After a partial write (W &lt; N), some servers may hold a stale value. On the next read, the client collects up to N replies and counts occurrences of each distinct value in a local hash table. The first value to reach R identical replies wins.</p>
+                    <p>If N servers are exhausted without any value reaching quorum — because too many failed or because stale values split the vote — the operation fails and returns an error.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ARCHITECTURE DIAGRAM -->
+    <div class="content-block">
+        <p class="s-label">03 — Architecture</p>
+        <h2 class="s-title">Three layers, one UDP socket at a time</h2>
+        <div class="split flip">
+            <div>
+                <div class="s-body">
+                    <p>The system separates three concerns that are layered cleanly on top of each other. Building them incrementally meant each layer could be tested in isolation before the next one depended on it, the fake network module was the most important design decision of the whole project.</p>
+                </div>
+                <div class="role-box" style="margin-top:20px;">
+                    <div class="role-box-title">Layers</div>
+                    <ul>
+                        <li><strong>Ring layer</strong> — SHA-1 projection, sorted node list, clockwise lookup with distinct-server filtering</li>
+                        <li><strong>Network layer</strong> — raw UDP, per-operation socket, timeout-based receive, binary framing</li>
+                        <li><strong>Local layer</strong> — in-memory hash table, detached pthreads, mutex-guarded access</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="diagram">
+                <svg viewBox="0 0 300 270" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </marker>
+                    </defs>
+                    <!-- Client -->
+                    <rect x="90" y="10" width="120" height="38" rx="6" fill="#F5F0E8" stroke="#7A1A1A" stroke-width="1"/>
+                    <text x="150" y="26" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="10" font-weight="700" fill="#7A1A1A">dkvs-client</text>
+                    <text x="150" y="40" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#a32540">get · put · find · cat · substr</text>
+                    <!-- Arrow -->
+                    <line x1="150" y1="48" x2="150" y2="72" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr3)"/>
+                    <text x="158" y="64" font-family="Clash Display,sans-serif" font-size="7.5" fill="#a89a8e">UDP</text>
+                    <!-- Ring layer box -->
+                    <rect x="16" y="74" width="268" height="46" rx="6" fill="rgba(122,26,26,0.05)" stroke="#7A1A1A" stroke-width="0.8" stroke-dasharray="4 2"/>
+                    <text x="26" y="90" font-family="Clash Display,sans-serif" font-size="7" fill="#7A1A1A" letter-spacing="0.1em">RING LAYER</text>
+                    <text x="150" y="108" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8.5" fill="#5C3D1E">SHA-1(key) → N distinct servers in order</text>
+                    <!-- Arrows down to servers -->
+                    <line x1="90"  y1="120" x2="90"  y2="142" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr3)"/>
+                    <line x1="210" y1="120" x2="210" y2="142" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr3)"/>
+                    <!-- Servers -->
+                    <rect x="16"  y="144" width="148" height="50" rx="6" fill="#F5F0E8" stroke="#2f5da1" stroke-width="1"/>
+                    <text x="90"  y="162" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="10" font-weight="700" fill="#2f5da1">dkvs-server</text>
+                    <text x="90"  y="176" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">UDP recv loop</text>
+                    <text x="90"  y="188" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">pthread / request</text>
+
+                    <rect x="172" y="144" width="112" height="50" rx="6" fill="#F5F0E8" stroke="#2f5da1" stroke-width="1"/>
+                    <text x="228" y="162" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="10" font-weight="700" fill="#2f5da1">dkvs-server</text>
+                    <text x="228" y="176" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">127.0.0.1:1235</text>
+                    <text x="228" y="188" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8" fill="#5C3D1E">mutex-guarded HT</text>
+                    <!-- Arrows to hash tables -->
+                    <line x1="90"  y1="194" x2="90"  y2="216" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr3)"/>
+                    <line x1="228" y1="194" x2="228" y2="216" stroke="#c0b4a8" stroke-width="1" marker-end="url(#arr3)"/>
+                    <!-- Hash tables -->
+                    <rect x="16"  y="218" width="148" height="28" rx="4" fill="#E8B84B" stroke="#c8980a" stroke-width="0.8"/>
+                    <text x="90"  y="236" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8.5" font-weight="700" fill="#5C3D1E">Htable [ key → value ]</text>
+                    <rect x="172" y="218" width="112" height="28" rx="4" fill="#E8B84B" stroke="#c8980a" stroke-width="0.8"/>
+                    <text x="228" y="236" text-anchor="middle" font-family="Clash Display,sans-serif" font-size="8.5" font-weight="700" fill="#5C3D1E">Htable [ key → value ]</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- BUILD PHASES -->
+    <div class="content-block">
+        <p class="s-label">04 — Build process</p>
+        <h2 class="s-title">Week by week, one abstraction at a time</h2>
+        <div class="s-body">
+            <p>Each week introduced exactly one new concept on top of a working, tested system. No week broke the previous one, that constraint shaped every design decision.</p>
+        </div>
+        <div class="timeline">
+            <div class="phase">
+                <div class="phase-week">Week 6</div>
+                <div>
+                    <div class="phase-title">Local server — S=N=R=W=1</div>
+                    <div class="phase-desc">Hash table, CLI tools (<code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">get</code>, <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">put</code>), argument parsing, fake network layer for testing without real sockets.</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-week">Week 8</div>
+                <div>
+                    <div class="phase-title">Value operations + consistent hash ring</div>
+                    <div class="phase-desc"><code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">find</code>, <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">substr</code>, <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">cat</code> commands. SHA-1 ring: sorted node list, clockwise lookup, multi-node servers parsed from <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">servers.txt</code>.</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-week">Week 9</div>
+                <div>
+                    <div class="phase-title">Real UDP networking</div>
+                    <div class="phase-desc">POSIX UDP sockets replace the fake layer. Binary message framing, timeout-based receive. Server-side get/put handlers.</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-week">Week 11</div>
+                <div>
+                    <div class="phase-title">Quorum & voting</div>
+                    <div class="phase-desc">Full N/W/R support. Client counts replies per distinct value in a local hash table. Stops as soon as R identical replies arrive, fails if N servers are exhausted first.</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-week">Week 12</div>
+                <div>
+                    <div class="phase-title">Ring monitoring — dkvs-dump-ring</div>
+                    <div class="phase-desc">New tool that walks all ring nodes in SHA-order and dumps each server's contents. <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">Htable_dump()</code> sends content in multiple UDP chunks. Server deduplication via local hash table.</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-week">Week 13</div>
+                <div>
+                    <div class="phase-title">Parallelism</div>
+                    <div class="phase-desc">Client sends all N messages before collecting replies. Per-operation sockets prevent cross-request contamination. Server spawns a detached pthread per request; mutex guards all hash table accesses.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- HARD PARTS -->
+    <div class="content-block">
+        <p class="s-label">05 — Real difficulties</p>
+        <h2 class="s-title">The parts that required the most care</h2>
+        <div class="s-body">
+            <p>Distributed systems have a way of making simple things complicated. A few moments that forced careful thinking.</p>
+        </div>
+        <div class="challenge-grid">
+            <div class="challenge-card">
+                <div class="challenge-icon">Ⅰ</div>
+                <div class="challenge-title">Stale replies across operations</div>
+                <div class="challenge-desc">A slow server replying to an old request would inject a stale datagram into a new operation's socket. Fix: open a fresh socket per operation, not per server — the OS assigns a new port each time, and old replies arrive on the now-closed socket.</div>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">Ⅱ</div>
+                <div class="challenge-title">Chunked dumps over UDP</div>
+                <div class="challenge-desc">A server's hash table may not fit in a single UDP datagram. <code style="font-family:monospace;font-size:11px;background:var(--creme);padding:1px 5px;border-radius:3px;color:var(--bordeaux);">Htable_dump()</code> takes a start-bucket index and writes as many entries as fit, returning the next unwritten index. The server loops and sends one message per chunk.</div>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">Ⅲ</div>
+                <div class="challenge-title">Consistent hashing edge cases</div>
+                <div class="challenge-desc">A physical server appears at multiple ring nodes — the lookup must skip nodes from already-visited servers (same IP and port), not just duplicate node hashes. The ring also wraps: when the key's SHA-1 is near the end, lookup continues from the beginning.</div>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">Ⅳ</div>
+                <div class="challenge-title">Mutex scope on the server</div>
+                <div class="challenge-desc">Each server thread reads and writes the shared hash table. The mutex must cover only the table access — not the entire request handler including the UDP reply — otherwise threads block each other during the network round-trip, defeating the point of multithreading.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- TAKEAWAYS -->
+    <div class="content-block">
+        <p class="s-label">06 — Takeaways</p>
+        <h2 class="s-title">What this project taught us</h2>
+        <div class="learned-grid">
+            <div class="learned-card">
+                <div class="learned-num">01</div>
+                <div class="learned-text">Eventual consistency is intuitive in theory. Implementing it means reasoning about every failure mode: dropped packets, partial writes, stale reads, concurrent threads racing on shared state.</div>
+            </div>
+            <div class="learned-card">
+                <div class="learned-num">02</div>
+                <div class="learned-text">A fake network layer is the most important design decision you can make early. It kept every layer testable in isolation and made debugging much easier than if we'd gone straight to real sockets.</div>
+            </div>
+            <div class="learned-card">
+                <div class="learned-num">03</div>
+                <div class="learned-text">The same abstraction can appear at multiple levels. The hash table used locally for key-value storage also served as the vote-counting mechanism at the client level — an elegant reuse across two completely different parts of the system.</div>
+            </div>
+            <div class="learned-card">
+                <div class="learned-num">04</div>
+                <div class="learned-text">Multithreading forces precision. Which data is shared, which is per-thread, and for exactly how long the lock must be held — not a question you can answer approximately.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- TEAM -->
+    <div class="content-block">
+        <p class="s-label">Team</p>
+        <h2 class="s-title">Two people, eight weeks</h2>
+        <div class="team-list">
+            <div class="team-member team-me">
+                <div class="team-avatar">AD</div>
+                <div>
+                    <div class="team-name">Amandine Dejardin</div>
+                </div>
+            </div>
+            <div class="team-member">
+               <div class="team-avatar">PB</div>
+                <div>
+                    <div class="team-name">Paul Barbereau</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- PROJECT NAV -->
+<div class="project-nav">
+    <a href="slamcar.html" class="proj-nav-link">
+        <span class="proj-nav-label">← Previous</span>
+        <span class="proj-nav-name">SLAMCar</span>
+    </a>
+    <a href="projects.html" class="proj-nav-link" style="text-align:right;">
+        <span class="proj-nav-label">All projects</span>
+        <span class="proj-nav-name">Back to index →</span>
+    </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-top">
+        <span>© 2026</span>
+        <div class="footer-nav">
+            <a href="index.html">Home</a>
+            <span class="footer-dot">·</span>
+            <a href="projects.html">Project</a>
+            <span class="footer-dot">·</span>
+            <a href="about.html">About</a>
+        </div>
+        <span>Amandine Dejardin</span>
+    </div>
+    <div class="footer-blobs">
+        <div class="blob blob-yellow"></div>
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-red"></div>
+    </div>
+</footer>
+
+<script>
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+        cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+        fx += (mx - fx) * 0.12; fy += (my - fy) * 0.12;
+        follower.style.left = fx + 'px'; follower.style.top = fy + 'px';
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    document.querySelectorAll('a, button').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+            cursor.style.background = '#E8B84B';
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+            cursor.style.background = '#7A1A1A';
+        });
+    });
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.content-block').forEach(b => obs.observe(b));
+</script>
+</body>
+</html>
