@@ -39,7 +39,6 @@
       cursor: none;
     }
 
-    /* CURSOR */
     .cursor {
       width: 12px;
       height: 12px;
@@ -69,7 +68,6 @@
       opacity: 0.5;
     }
 
-    /* NAV */
     nav {
       position: fixed;
       top: 20px;
@@ -127,24 +125,11 @@
       border-radius: 50%;
     }
 
-    /* PAGE HEADER */
     .page-header {
       padding: 120px 48px 60px;
       position: relative;
       overflow: hidden;
       background: #DFE8FD;
-    }
-
-    .page-header-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: var(--brun);
-      opacity: 0.45;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      opacity: 0;
-      animation: slideUp 0.7s 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     .page-title {
@@ -176,7 +161,6 @@
       animation: fadeIn 0.6s 1s forwards;
     }
 
-    /* PROJECT LIST */
     .projects-list {
       padding: 0 48px 80px;
     }
@@ -199,7 +183,6 @@
       transform: translateY(0);
     }
 
-    /* alternating: odd = text left / image right | even = image left / text right */
     .project-row:nth-child(even) .project-info {
       order: 2;
       padding-left: 52px;
@@ -313,7 +296,6 @@
       transform: translateX(6px);
     }
 
-    /* THUMBNAIL */
     .project-thumb {
       position: relative;
       overflow: hidden;
@@ -345,7 +327,6 @@
       background: rgba(122, 26, 26, 0.06);
     }
 
-    /* placeholder si pas d'image */
     .thumb-placeholder {
       width: 100%;
       height: 100%;
@@ -355,11 +336,169 @@
       font-size: 56px;
     }
 
-    /* FOOTER (identique index) */
+    /* ── COMING SOON SECTION ── */
+    .coming-section {
+      padding: 72px 48px 80px;
+      background: var(--creme);
+    }
+
+    .coming-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .coming-header.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .coming-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(28px, 3.5vw, 48px);
+      font-weight: 800;
+      color: var(--brun);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .coming-title span {
+      color: var(--bordeaux);
+    }
+
+    .coming-subtitle {
+      font-size: 13px;
+      color: var(--brun);
+      opacity: 0.5;
+      font-weight: 500;
+    }
+
+    .coming-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .coming-card {
+      background: var(--blanc);
+      border-radius: 16px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      border: 1.5px solid rgba(92, 61, 30, 0.08);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .coming-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .coming-card:hover {
+      box-shadow: 0 8px 32px rgba(122, 26, 26, 0.08);
+    }
+
+    .coming-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .coming-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+
+    .badge-inprogress {
+      background: rgba(232, 184, 75, 0.18);
+      color: #9A6F00;
+    }
+
+    .badge-planned {
+      background: rgba(47, 93, 161, 0.1);
+      color: var(--bleu);
+    }
+
+    .badge-idea {
+      background: rgba(92, 61, 30, 0.08);
+      color: var(--brun);
+    }
+
+    .coming-progress-wrap {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .coming-progress-wrap svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-bg {
+      fill: none;
+      stroke: rgba(92, 61, 30, 0.1);
+      stroke-width: 3;
+    }
+
+    .progress-bar {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .progress-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--brun);
+    }
+
+    .coming-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+    }
+
+    .coming-desc {
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(26, 16, 8, 0.55);
+    }
+
+    .coming-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* FOOTER */
     footer {
       background: var(--blanc);
       padding: 32px 48px 0;
-      margin-top: 40px;
+      margin-top: 0;
     }
 
     .footer-top {
@@ -423,7 +562,6 @@
       border-radius: 50% 50% 0 0;
     }
 
-    /* ANIMATIONS */
     @keyframes slideUp {
       to {
         opacity: 1;
@@ -450,23 +588,19 @@
   <div class="cursor" id="cursor"></div>
   <div class="cursor-follower" id="follower"></div>
 
-  <!-- NAV -->
   <nav>
     <a href="index.html" class="nav-btn nav-home">Home</a>
     <a href="projects.html" class="nav-btn nav-project">Project</a>
     <a href="about.html" class="nav-btn nav-about">About</a>
   </nav>
 
-  <!-- HEADER -->
   <header class="page-header">
     <h1 class="page-title">Portfolio<sup>06</sup></h1>
     <div class="header-line"></div>
   </header>
 
-  <!-- PROJECTS LIST -->
   <section class="projects-list">
 
-    <!-- PROJECT 01 -->
     <div class="project-row">
       <div class="project-info">
         <span class="project-index">Project 01</span>
@@ -478,7 +612,7 @@
         </div>
         <p class="project-desc">Designed and integrated key software components of a SLAM-based autonomous vehicle,
           enabling real-time environment mapping and self-localization.</p>
-        <a href="#" class="btn-view">View more details<span class="btn-arrow">→</span></a>
+        <a href="slamcar.html" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
         <img src="images/SLAM_illustration.png" alt="SLAMCar">
@@ -486,7 +620,6 @@
       </div>
     </div>
 
-    <!-- PROJECT 02 -->
     <div class="project-row">
       <div class="project-info">
         <span class="project-index">Project 02</span>
@@ -495,7 +628,8 @@
           <span class="tag tag-bordeaux">Scala</span>
           <span class="tag tag-bleu">Distributed Systems</span>
         </div>
-        <p class="project-desc">Built a fault-tolerant distributed key-value store in C with consistent hashing, UDP networking, data replication, quorum protocols, and multithreaded server processing.</p>
+        <p class="project-desc">Built a fault-tolerant distributed key-value store in C with consistent hashing, UDP
+          networking, data replication, quorum protocols, and multithreaded server processing.</p>
         <a href="#" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
@@ -513,8 +647,9 @@
           <span class="tag tag-bleu">Compilers</span>
           <span class="tag tag-brun">C</span>
         </div>
-        <p class="project-desc">Built a compiler for the Amy programming language, transforming high-level functional code into executable C through lexical analysis, parsing, semantic analysis, and code generation.</p>
-        <a href="#" class="btn-view">View more details<span class="btn-arrow">→</span></a>
+        <p class="project-desc">Built a compiler for the Amy programming language, transforming high-level functional
+          code into executable C through lexical analysis, parsing, semantic analysis, and code generation.</p>
+        <a href="#" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
         <img src="images/amy_compiler.png" alt="Amy Compiler">
@@ -522,7 +657,6 @@
       </div>
     </div>
 
-    <!-- PROJECT 04 -->
     <div class="project-row">
       <div class="project-info">
         <span class="project-index">Project 04</span>
@@ -532,8 +666,10 @@
           <span class="tag tag-bleu">C++</span>
           <span class="tag tag-brun">HPC</span>
         </div>
-        <p class="project-desc">Optimized GPU-based matrix multiplication kernels using CUDA, achieving significant performance improvements through memory access optimization, parallel execution, and shared memory techniques.</p>
-        <a href="#" class="btn-view">View more details<span class="btn-arrow">→</span></a>
+        <p class="project-desc">Optimized GPU-based matrix multiplication kernels using CUDA, achieving significant
+          performance improvements through memory access optimization, parallel execution, and shared memory techniques.
+        </p>
+        <a href="#" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
         <img src="images/nvidia_gpu.png" alt="GPU Optimization">
@@ -547,41 +683,77 @@
         <h2 class="project-name">RISC-V Multicycle Processor</h2>
         <div class="project-tags">
           <span class="tag tag-bordeaux">Verilog</span>
-          <span class="tag tag-bleu">CPU hardware</span>
+          <span class="tag tag-bleu">CPU Hardware</span>
         </div>
-        <p class="project-desc">Designed and implemented a multicycle RISC-V processor in Verilog, including ALU, control unit, memory-mapped peripherals and interrupt handling.
-        </p>
-        <a href="#" class="btn-view">View more details<span class="btn-arrow">→</span></a>
-      </div>
-      <div class="project-thumb">
-        <div class="project-thumb">
-        <img src="images/CPU_illustration.jpg" alt="GPU Optimization">
-        <div class="thumb-overlay"></div>
-      </div>
-      </div>
-    </div>
-
-    <div class="project-row">
-      <div class="project-info">
-        <span class="project-index">Project 06</span>
-        <h2 class="project-name">LLM automatic chat bot</h2>
-        <div class="project-tags">
-          <span class="tag tag-bordeaux">ML</span>
-          <span class="tag tag-bleu">C</span>
-          <span class="tag tag-brun">Neutal network</span>
-        </div>
-        <p class="project-desc">Design my own IA chat bot</p>
+        <p class="project-desc">Designed and implemented a multicycle RISC-V processor in Verilog, including ALU,
+          control unit, memory-mapped peripherals and interrupt handling.</p>
         <a href="#" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
-        <img src="images/ai_illustration.jpg" alt="GPU Optimization">
+        <img src="images/CPU_illustration.jpg" alt="RISC-V Processor">
         <div class="thumb-overlay"></div>
       </div>
     </div>
 
+
   </section>
 
-  <!-- FOOTER -->
+  <!-- COMING SOON -->
+  <section class="coming-section">
+    <div class="coming-header reveal-coming">
+      <div>
+        <p class="coming-subtitle" style="margin-bottom:8px;">What's next</p>
+        <h2 class="coming-title">In progress <span>&</span> coming soon</h2>
+      </div>
+    </div>
+
+    <div class="coming-grid">
+
+      <div class="coming-card reveal-coming">
+        <div class="coming-card-top">
+          <span class="coming-badge badge-inprogress">In progress</span>
+          <div class="coming-progress-wrap">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle class="progress-bg" cx="24" cy="24" r="20" />
+              <circle class="progress-bar" cx="24" cy="24" r="20" stroke="#2f5da1" stroke-dasharray="125.6"
+                stroke-dashoffset="100.5" data-offset="100.5" />
+            </svg>
+            <div class="progress-pct">25%</div>
+          </div>
+        </div>
+        <h3 class="coming-name">In course project</h3>
+        <p class="coming-desc">Designed and train my own AI chatbot from scratch, implementing a neural network
+          architecture in C for lightweight inference.</p>
+        <div class="coming-tags">
+          <span class="tag tag-bordeaux">Machine Learning</span>
+          <span class="tag tag-bleu">C</span>
+        </div>
+      </div>
+
+      <div class="coming-card reveal-coming" style="transition-delay: 0.1s">
+        <div class="coming-card-top">
+          <span class="coming-badge badge-planned">Planned</span>
+          <div class="coming-progress-wrap">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle class="progress-bg" cx="24" cy="24" r="20" />
+              <circle class="progress-bar" cx="24" cy="24" r="20" stroke="#2f5da1" stroke-dasharray="125.6"
+                stroke-dashoffset="113" data-offset="113" />
+            </svg>
+            <div class="progress-pct">10%</div>
+          </div>
+        </div>
+        <h3 class="coming-name">Automated Web Security Scanner</h3>
+        <p class="coming-desc">Develope an automated web security scanner capable of detecting common vulnerabilities
+          such as SQL injection, XSS, insecure headers, exposed endpoints, and configuration weaknesses.</p>
+        <div class="coming-tags">
+          <span class="tag tag-bleu">Technologie</span>
+          <span class="tag tag-brun">Domaine</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <footer>
     <div class="footer-top">
       <span>© 2026</span>
@@ -602,7 +774,6 @@
   </footer>
 
   <script>
-    // Custom cursor
     const cursor = document.getElementById('cursor');
     const follower = document.getElementById('follower');
     let mx = 0, my = 0, fx = 0, fy = 0;
@@ -619,17 +790,38 @@
       el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; cursor.style.background = '#7A1A1A'; });
     });
 
-    // Scroll reveal avec délai échelonné par index
+    // Scroll reveal — project rows
     const rows = document.querySelectorAll('.project-row');
-    const observer = new IntersectionObserver(entries => {
+    const rowObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); rowObserver.unobserve(entry.target); }
       });
     }, { threshold: 0.1 });
-    rows.forEach(r => observer.observe(r));
+    rows.forEach(r => rowObserver.observe(r));
+
+    // Scroll reveal — coming section
+    const comingEls = document.querySelectorAll('.reveal-coming');
+    const comingObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); comingObserver.unobserve(entry.target); }
+      });
+    }, { threshold: 0.1 });
+    comingEls.forEach(el => comingObserver.observe(el));
+
+    // Animate progress circles when visible
+    const progressBars = document.querySelectorAll('.progress-bar');
+    const progressObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const bar = entry.target;
+          const offset = parseFloat(bar.dataset.offset);
+          bar.style.strokeDashoffset = '125.6';
+          setTimeout(() => { bar.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)'; bar.style.strokeDashoffset = offset; }, 100);
+          progressObserver.unobserve(bar);
+        }
+      });
+    }, { threshold: 0.3 });
+    progressBars.forEach(b => progressObserver.observe(b));
   </script>
 </body>
 
