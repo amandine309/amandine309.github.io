@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPU Matrix Multiplication — Amandine Dejardin</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bordeaux: #7A1A1A;
+      --jaune: #E8B84B;
+      --bleu: #2f5da1;
+      --creme: #F5F0E8;
+      --brun: #5C3D1E;
+      --blanc: #ffffff;
+      --noir: #1A1008;
+      --vert: #1a5c2a;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Satoshi', sans-serif;
+      background: var(--blanc);
+      color: var(--noir);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    .cursor {
+      width: 12px;
+      height: 12px;
+      background: var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease, background 0.2s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .cursor-follower {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.35s ease;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    nav {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeDown 0.6s 0.3s forwards;
+    }
+
+    .nav-btn {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: none;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px) scale(1.04);
+      filter: brightness(0.95);
+    }
+
+    .nav-home {
+      width: 110px;
+      height: 90px;
+      background: #f7ce53;
+      mask-image: url("shapes/home-shape.svg");
+      -webkit-mask-image: url("shapes/home-shape.svg");
+      color: var(--bleu);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+    }
+
+    .nav-project {
+      width: 95px;
+      height: 90px;
+      background: var(--bleu);
+      color: var(--blanc);
+      border-radius: 8px;
+    }
+
+    .nav-about {
+      width: 95px;
+      height: 90px;
+      background: var(--bordeaux);
+      color: var(--creme);
+      border-radius: 50%;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 36px;
+      left: 36px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--creme);
+      text-decoration: none;
+      opacity: 0;
+      animation: fadeDown 0.5s 0.5s forwards;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--jaune);
+    }
+
+    .back-arrow {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .back-link:hover .back-arrow {
+      transform: translateX(-5px);
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 65vh;
+      background: #590548;
+      padding: 140px 56px 64px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(47, 93, 161, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 93, 161, 0.07) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.35);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.5s forwards;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(48px, 8vw, 118px);
+      font-weight: 800;
+      color: var(--blanc);
+      line-height: 0.88;
+      letter-spacing: -4px;
+      opacity: 0;
+      animation: slideUp 0.9s 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title .dim {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-meta-bar {
+      display: flex;
+      gap: 40px;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      animation: slideUp 0.6s 0.9s forwards;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+      margin-bottom: 5px;
+    }
+
+    .hero-meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    /* CONTENT */
+    .content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    .s-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bordeaux);
+      opacity: 0.6;
+      margin-bottom: 10px;
+    }
+
+    .s-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 700;
+      color: var(--bordeaux);
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .s-body {
+      font-size: 15px;
+      line-height: 1.78;
+      color: rgba(26, 16, 8, 0.68);
+    }
+
+    .s-body p+p {
+      margin-top: 14px;
+    }
+
+    .content-block {
+      margin-bottom: 72px;
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(92, 61, 30, 0.1);
+      margin: 56px 0;
+    }
+
+    /* DIAGRAM */
+    .diagram-wrap {
+      background: var(--creme);
+      border-radius: 16px;
+      padding: 36px 32px;
+      margin: 32px 0;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .diagram-wrap.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .diagram-wrap.dark {
+      background: #3d3d3d;
+    }
+
+    .diagram-caption {
+      font-size: 12px;
+      color: var(--brun);
+      opacity: 0.5;
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .diagram-wrap.dark .diagram-caption {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* SPEEDUP BAR CHART */
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-label {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brun);
+      width: 40px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 28px;
+      background: rgba(92, 61, 30, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--blanc);
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0;
+    }
+
+    .bar-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brun);
+      flex-shrink: 0;
+      width: 52px;
+    }
+
+    /* JOURNEY STEPS */
+    .journey {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .journey-step {
+      display: flex;
+      gap: 0;
+    }
+
+    .journey-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 56px;
+      flex-shrink: 0;
+    }
+
+    .journey-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .journey-line {
+      width: 2px;
+      flex: 1;
+      min-height: 24px;
+    }
+
+    .journey-step:last-child .journey-line {
+      display: none;
+    }
+
+    .journey-content {
+      padding: 0 0 40px 20px;
+      flex: 1;
+    }
+
+    .journey-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .journey-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.62);
+    }
+
+    .journey-speedup {
+      display: inline-block;
+      margin-top: 10px;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 100px;
+    }
+
+    /* step colors */
+    .step-omp .journey-circle {
+      background: rgba(232, 184, 75, 0.15);
+      color: #9A6F00;
+    }
+
+    .step-omp .journey-line {
+      background: rgba(232, 184, 75, 0.25);
+    }
+
+    .step-omp .journey-title {
+      color: #9A6F00;
+    }
+
+    .step-omp .journey-speedup {
+      background: rgba(232, 184, 75, 0.15);
+      color: #9A6F00;
+    }
+
+    .step-mpi .journey-circle {
+      background: rgba(47, 93, 161, 0.12);
+      color: var(--bleu);
+    }
+
+    .step-mpi .journey-line {
+      background: rgba(47, 93, 161, 0.15);
+    }
+
+    .step-mpi .journey-title {
+      color: var(--bleu);
+    }
+
+    .step-mpi .journey-speedup {
+      background: rgba(47, 93, 161, 0.1);
+      color: var(--bleu);
+    }
+
+    .step-cuda .journey-circle {
+      background: rgba(122, 26, 26, 0.1);
+      color: var(--bordeaux);
+    }
+
+    .step-cuda .journey-line {
+      background: rgba(122, 26, 26, 0.1);
+    }
+
+    .step-cuda .journey-title {
+      color: var(--bordeaux);
+    }
+
+    .step-cuda .journey-speedup {
+      background: rgba(122, 26, 26, 0.08);
+      color: var(--bordeaux);
+    }
+
+    .step-combo .journey-circle {
+      background: rgba(26, 92, 42, 0.1);
+      color: var(--vert);
+    }
+
+    .step-combo .journey-line {
+      background: rgba(26, 92, 42, 0.1);
+    }
+
+    .step-combo .journey-title {
+      color: var(--vert);
+    }
+
+    .step-combo .journey-speedup {
+      background: rgba(26, 92, 42, 0.08);
+      color: var(--vert);
+    }
+
+    /* VERSIONS TABLE */
+    .versions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+
+    .versions-table th {
+      text-align: left;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brun);
+      opacity: 0.45;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.1);
+    }
+
+    .versions-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.06);
+      vertical-align: top;
+      line-height: 1.5;
+      color: rgba(26, 16, 8, 0.7);
+    }
+
+    .versions-table td:first-child {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      color: var(--bordeaux);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .versions-table tr:hover td {
+      background: rgba(232, 184, 75, 0.04);
+    }
+
+    .v-delta {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a5c2a;
+    }
+
+    /* LEARNED */
+    .learned-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .learned-card {
+      background: var(--creme);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .learned-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--bordeaux);
+      opacity: 0.4;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .learned-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--brun);
+    }
+
+    /* QUOTE */
+    .quote-block {
+      border-left: 4px solid var(--jaune);
+      padding: 20px 28px;
+      margin: 32px 0;
+      background: rgba(232, 184, 75, 0.06);
+      border-radius: 0 12px 12px 0;
+    }
+
+    .quote-text {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--brun);
+      line-height: 1.4;
+    }
+
+    .quote-sub {
+      font-size: 13px;
+      color: var(--brun);
+      opacity: 0.5;
+      margin-top: 8px;
+    }
+
+    /* TEAM */
+    .team-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .team-member {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--creme);
+      border-radius: 100px;
+      padding: 8px 16px 8px 8px;
+    }
+
+    .team-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bleu);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--blanc);
+    }
+
+    .team-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brun);
+    }
+
+    .team-role {
+      font-size: 11px;
+      color: var(--brun);
+      opacity: 0.5;
+    }
+
+    .team-me {
+      background: rgba(122, 26, 26, 0.08);
+      border: 1.5px solid rgba(122, 26, 26, 0.2);
+    }
+
+    .team-me .team-avatar {
+      background: var(--bordeaux);
+    }
+
+    /* PROJECT NAV */
+    .project-nav {
+      background: var(--creme);
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .proj-nav-link {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .proj-nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brun);
+      opacity: 0.4;
+    }
+
+    .proj-nav-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      transition: letter-spacing 0.3s ease;
+    }
+
+    .proj-nav-link:hover .proj-nav-name {
+      letter-spacing: 0.5px;
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--blanc);
+      padding: 32px 48px 0;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.12);
+      font-size: 14px;
+      color: var(--brun);
+      font-weight: 500;
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .footer-nav a {
+      color: var(--brun);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-nav a:hover {
+      color: var(--bordeaux);
+    }
+
+    .footer-dot {
+      opacity: 0.4;
+    }
+
+    .footer-blobs {
+      display: flex;
+      align-items: flex-end;
+      height: 120px;
+      overflow: hidden;
+    }
+
+    .blob {
+      height: 105px;
+      flex-shrink: 0;
+    }
+
+    .blob-yellow {
+      width: 34%;
+      background: var(--jaune);
+      border-radius: 70px 70px 0 0;
+    }
+
+    .blob-blue {
+      width: 34%;
+      background: var(--bleu);
+      border-radius: 0;
+    }
+
+    .blob-red {
+      width: 32%;
+      background: #C8431A;
+      border-radius: 50% 50% 0 0;
+    }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="follower"></div>
+  <a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+
+  <nav>
+    <a href="index.html" class="nav-btn nav-home">Home</a>
+    <a href="projects.html" class="nav-btn nav-project">Project</a>
+    <a href="about.html" class="nav-btn nav-about">About</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid-bg"></div>
+    <p class="hero-label">Project 04 — CS-307 · EPFL · 2025</p>
+    <h1 class="hero-title">
+      <div>GPU Matrix</div>
+      <div class="dim">Optimization</div>
+    </h1>
+    <div class="hero-meta-bar">
+      <div>
+        <div class="hero-meta-label">Team</div>
+        <div class="hero-meta-value">2 people</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Hardware</div>
+        <div class="hero-meta-value">NVIDIA V100 · SCITAS cluster</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Stack</div>
+        <div class="hero-tags"><span class="hero-tag">C</span><span class="hero-tag">OpenMP</span><span
+            class="hero-tag">MPI</span><span class="hero-tag">CUDA</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="content">
+
+    <!-- INTRO -->
+    <div class="content-block">
+      <p class="s-label">The project</p>
+      <h2 class="s-title">Three assignments, one obsession: making it faster</h2>
+      <div class="s-body">
+        <p>Over three assignments, we optimized a single operation <strong>Reduced Matrix Multiplication (RMM)</strong>
+          from a sequential C baseline all the way to a CUDA kernel running on an NVIDIA V100 GPU. Each assignment
+          introduced a new parallelism model: shared-memory threads with OpenMP, distributed processes with MPI, then
+          GPU compute with CUDA.</p>
+        <p>The results were striking every time. A few pragmas, a broadcast, a kernel launch, and suddenly the same
+          computation that took 4 seconds runs in 0.1. Watching execution time collapse with each optimization was one
+          of the most viscerally satisfying experiences I've had in a CS course.</p>
+      </div>
+
+      <div class="quote-block">
+        <div class="quote-text">"Two lines of code. ×6.6 speedup. That's the moment you understand why people care about
+          parallelism."</div>
+        <div class="quote-sub">Adding #pragma omp parallel for collapse(2) to the RMM loop — Assignment 1</div>
+      </div>
+    </div>
+
+    <!-- WHAT IS RMM -->
+    <div class="content-block">
+      <p class="s-label">The operation</p>
+      <h2 class="s-title">What is Reduced Matrix Multiplication?</h2>
+      <div class="s-body">
+        <p>Standard matrix multiplication computes C = A × B where C[i][j] = Σ A[i][k] × B[k][j]. RMM is a variant that
+          "reduces" the output dimensions, each output element C[i][j] aggregates contributions from a 2×2 block of A
+          and B, combining four products into one result.</p>
+        <p>This makes every output element fully independent of every other, a property that makes RMM
+          <strong>embarrassingly parallelizable</strong> and a perfect playground to explore different parallelism
+          models.</p>
+      </div>
+
+      <!-- RMM formula diagram -->
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <text x="0" y="18" font-family="monospace" font-size="12" font-weight="700" fill="#5C3D1E">RMM formula — each
+            output element C[i][j]</text>
+          <rect x="0" y="28" width="720" height="72" rx="10" fill="#5C3D1E" opacity="0.05" />
+          <text x="16" y="54" font-family="monospace" font-size="12" fill="#5C3D1E">C[i][j] = Σ ( A[2i][k]·B[k][2j] +
+            A[2i][k]·B[k][2j+1] + A[2i+1][k]·B[k][2j] + A[2i+1][k]·B[k][2j+1] )</text>
+          <text x="16" y="82" font-family="monospace" font-size="10" fill="#5C3D1E" opacity="0.45"> k four products per
+            k — all C[i][j] are independent → perfect for parallelism</text>
+        </svg>
+        <p class="diagram-caption">RMM — 4 products per k, fully independent output elements</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- THE JOURNEY -->
+    <div class="content-block">
+      <p class="s-label">Three assignments</p>
+      <h2 class="s-title">The optimization journey</h2>
+      <div class="s-body">
+        <p>Each assignment layered a new parallelism model on top of the previous one. Here's how performance evolved.
+        </p>
+      </div>
+
+      <div class="journey" style="margin-top:32px;">
+        <div class="journey-step step-omp">
+          <div class="journey-left">
+            <div class="journey-circle">A1</div>
+            <div class="journey-line"></div>
+          </div>
+          <div class="journey-content">
+            <div class="journey-title">OpenMP — shared-memory threads</div>
+            <div class="journey-desc">A single pragma on the two outer loops. Each thread gets a slice of the output
+              matrix to compute independently. We added B matrix transposition to fix cache-unfriendly column access,
+              and split the 4 accumulators to let the compiler vectorize with SIMD. Sequential baseline: 4.4s. With
+              OpenMP + optimizations at 8 threads: 0.41s.</div>
+            <span class="journey-speedup">×10.7 vs sequential</span>
+          </div>
+        </div>
+
+        <div class="journey-step step-mpi">
+          <div class="journey-left">
+            <div class="journey-circle">A2</div>
+            <div class="journey-line"></div>
+          </div>
+          <div class="journey-content">
+            <div class="journey-title">MPI — distributed processes across nodes</div>
+            <div class="journey-desc">Matrix B is broadcast to every process. Each process receives a contiguous chunk
+              of rows of A via MPI_Scatterv, computes its part of C independently, then results are gathered. No
+              communication during computation, each process is self-sufficient. At 16 processes (M=N=K=4096): ~0.6s.
+              Best hybrid combo (2 MPI × 72 OMP threads): consistently fastest.</div>
+            <span class="journey-speedup">Linear scaling to ~16 processes</span>
+          </div>
+        </div>
+
+        <div class="journey-step step-combo">
+          <div class="journey-left">
+            <div class="journey-circle">A2+</div>
+            <div class="journey-line"></div>
+
+          </div>
+          <div class="journey-content">
+            <div class="journey-title">OpenMP + MPI hybrid — best of both worlds</div>
+            <div class="journey-desc">The optimal configuration was 2 MPI processes × 72 OpenMP threads, one MPI
+              process per physical node, OpenMP exploiting all 72 cores within each node via shared memory. This avoids
+              inter-node communication for the inner loop while still distributing work across nodes. At M=N=K=8192:
+              1.97s, the fastest of all tested configurations.</div>
+            <span class="journey-speedup">Best config: 2×72 hybrid</span>
+          </div>
+        </div>
+
+        <div class="journey-step step-cuda">
+          <div class="journey-left">
+            <div class="journey-circle">A3</div>
+          </div>
+          <div class="journey-content">
+            <div class="journey-title">CUDA — thousands of GPU threads</div>
+            <div class="journey-desc">One CUDA thread per output element C[i][j]. The thread computes the full
+              k-reduction for that single element. We iteratively refined the kernel through 6 versions: better block
+              shapes, register reuse, algebraic factorization (4 mults → 1), shared-memory tiling. V1 naive: 0.907s
+              compute. V5 tiled: 0.122s. An 86% reduction just from memory optimizations.</div>
+            <span class="journey-speedup">−86% compute time V1→V5</span>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+
+    <!-- SPEEDUP CHART -->
+    <div class="diagram-wrap" id="bar-diagram">
+      <p
+        style="font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;color:var(--brun);margin-bottom:20px;">
+        Speedup over sequential baseline — RMM (M=N=K=2048, 8 threads)</p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">V0</div>
+          <div class="bar-track">
+            <div class="bar-fill" data-width="1.5%" style="background:#c9b89a;">V0 baseline</div>
+          </div>
+          <div class="bar-val">×1.0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">+OMP</div>
+          <div class="bar-track">
+            <div class="bar-fill" data-width="46%" style="background:#E8B84B;">×6.65</div>
+          </div>
+          <div class="bar-val">×6.65</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">+transp</div>
+          <div class="bar-track">
+            <div class="bar-fill" data-width="74%" style="background:#d4943a;">×10.7</div>
+          </div>
+          <div class="bar-val">×10.7</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">CUDA V1</div>
+          <div class="bar-track">
+            <div class="bar-fill" data-width="28%" style="background:#7A9FD4;">naive GPU</div>
+          </div>
+          <div class="bar-val">ref</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">CUDA V5</div>
+          <div class="bar-track">
+            <div class="bar-fill" data-width="92%" style="background:#2f5da1;">tiled −86%</div>
+          </div>
+          <div class="bar-val">−86%</div>
+        </div>
+      </div>
+      <p class="diagram-caption">Key speedup milestones across the three assignments</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SIMT DIAGRAM -->
+    <div class="content-block">
+      <p class="s-label">How GPUs work</p>
+      <h2 class="s-title">SIMT — Single Instruction, Multiple Threads</h2>
+      <div class="s-body">
+        <p>Before this project, GPU programming was a black box. Writing CUDA forced me to understand exactly how a GPU
+          executes code, and it's fundamentally different from a CPU. The key model is <strong>SIMT</strong>: the GPU
+          groups 32 threads into a <em>warp</em>, and all 32 execute the same instruction simultaneously on different
+          data. This is what makes GPUs so fast for matrix operations and what makes some code patterns
+          catastrophically slow.</p>
+      </div>
+
+      <div class="diagram-wrap dark" style="margin-top:24px;">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <!-- CPU side -->
+          <text x="0" y="20" font-family="monospace" font-size="11" font-weight="700" fill="rgba(255,255,255,0.5)">CPU —
+            few powerful cores</text>
+          <rect x="0" y="30" width="60" height="60" rx="8" fill="#E8B84B" opacity="0.2" />
+          <text x="30" y="58" text-anchor="middle" font-family="monospace" font-size="10" fill="#E8B84B"
+            font-weight="700">Core</text>
+          <text x="30" y="72" text-anchor="middle" font-family="monospace" font-size="9" fill="#E8B84B" opacity="0.6">1
+            thread</text>
+          <rect x="70" y="30" width="60" height="60" rx="8" fill="#E8B84B" opacity="0.2" />
+          <text x="100" y="58" text-anchor="middle" font-family="monospace" font-size="10" fill="#E8B84B"
+            font-weight="700">Core</text>
+          <text x="100" y="72" text-anchor="middle" font-family="monospace" font-size="9" fill="#E8B84B" opacity="0.6">1
+            thread</text>
+          <rect x="140" y="30" width="60" height="60" rx="8" fill="#E8B84B" opacity="0.2" />
+          <text x="170" y="58" text-anchor="middle" font-family="monospace" font-size="10" fill="#E8B84B"
+            font-weight="700">Core</text>
+          <text x="170" y="72" text-anchor="middle" font-family="monospace" font-size="9" fill="#E8B84B" opacity="0.6">1
+            thread</text>
+          <text x="215" y="62" font-family="monospace" font-size="20" fill="rgba(255,255,255,0.15)">···</text>
+          <text x="0" y="112" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.25)">up to ~128 threads,
+            high clock, complex OOO execution</text>
+
+          <!-- divider -->
+          <line x1="0" y1="130" x2="720" y2="130" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+
+          <!-- GPU side -->
+          <text x="0" y="155" font-family="monospace" font-size="11" font-weight="700" fill="rgba(255,255,255,0.5)">GPU
+            — thousands of simple threads, grouped into warps of 32</text>
+
+          <!-- SM block -->
+          <rect x="0" y="165" width="340" height="80" rx="10" fill="rgba(47,93,161,0.15)" />
+          <text x="12" y="183" font-family="monospace" font-size="10" font-weight="700" fill="#7A9FD4">Streaming
+            Multiprocessor (SM)</text>
+
+          <!-- warp -->
+          <rect x="12" y="190" width="148" height="44" rx="6" fill="rgba(47,93,161,0.2)" />
+          <text x="86" y="207" text-anchor="middle" font-family="monospace" font-size="9" font-weight="700"
+            fill="#7A9FD4">Warp — 32 threads</text>
+          <text x="86" y="222" text-anchor="middle" font-family="monospace" font-size="8" fill="#7A9FD4"
+            opacity="0.6">same instruction, different data</text>
+
+          <rect x="170" y="190" width="148" height="44" rx="6" fill="rgba(47,93,161,0.2)" />
+          <text x="244" y="207" text-anchor="middle" font-family="monospace" font-size="9" font-weight="700"
+            fill="#7A9FD4">Warp — 32 threads</text>
+          <text x="244" y="222" text-anchor="middle" font-family="monospace" font-size="8" fill="#7A9FD4"
+            opacity="0.6">same instruction, different data</text>
+
+          <!-- more SMs -->
+          <rect x="350" y="165" width="340" height="80" rx="10" fill="rgba(47,93,161,0.12)" />
+          <text x="362" y="183" font-family="monospace" font-size="10" font-weight="700" fill="#7A9FD4">Another SM ···
+            up to 80 SMs on V100</text>
+          <rect x="362" y="190" width="148" height="44" rx="6" fill="rgba(47,93,161,0.15)" />
+          <text x="436" y="214" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A9FD4"
+            opacity="0.7">Warp — 32 threads</text>
+          <text x="560" y="214" font-family="monospace" font-size="16" fill="rgba(255,255,255,0.1)">···</text>
+
+          <text x="0" y="258" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">V100: 80 SMs × 2048
+            threads = 163,840 concurrent threads — at the cost of simpler per-thread execution</text>
+        </svg>
+        <p class="diagram-caption" style="color:rgba(255,255,255,0.25);">SIMT execution model — warps of 32 threads
+          execute in lockstep</p>
+      </div>
+
+      <div class="s-body" style="margin-top:20px;">
+        <p>This has a critical consequence: if 32 threads in a warp access memory in a <strong>coalesced</strong>
+          pattern (consecutive addresses), they all get served in one memory transaction. If they access scattered
+          addresses, you get 32 separate transactions, a 32× slowdown. This is exactly why block shape matters so much
+          in V2, and why transposing matrix B is such a big win: it turns scattered column accesses into sequential row
+          reads.</p>
+      </div>
+    </div>
+
+    <!-- CUDA VERSIONS TABLE -->
+    <div class="content-block">
+      <p class="s-label">CUDA optimization path</p>
+      <h2 class="s-title">Six versions, one kernel, −88% compute time</h2>
+      <table class="versions-table">
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>What changed</th>
+            <th>Compute time (8192)</th>
+            <th>Δ vs V1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>V0</td>
+            <td>Sequential CPU baseline</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>V1</td>
+            <td>Naive CUDA — 1 thread per output element, default block shape</td>
+            <td>0.907s</td>
+            <td>baseline</td>
+          </tr>
+          <tr>
+            <td>V2</td>
+            <td>Better block shape (32×16 wins) — warp-aligned column access, more concurrent blocks</td>
+            <td>0.791s</td>
+            <td><span class="v-delta">−12.8%</span></td>
+          </tr>
+          <tr>
+            <td>V3</td>
+            <td>Register reuse — load a0, a1, b0, b1 once per iteration instead of recomputing</td>
+            <td>0.385s</td>
+            <td><span class="v-delta">−57.6%</span></td>
+          </tr>
+          <tr>
+            <td>V4</td>
+            <td>Algebraic factorization — 4 multiplications per k → 1 multiplication per k</td>
+            <td>0.322s</td>
+            <td><span class="v-delta">−64.5%</span></td>
+          </tr>
+          <tr>
+            <td>V5</td>
+            <td>Shared-memory tiling — blocks load reusable tiles of A and B into fast on-chip memory</td>
+            <td>0.122s</td>
+            <td><span class="v-delta">−86.6%</span></td>
+          </tr>
+          <tr>
+            <td>V6</td>
+            <td>#pragma unroll on inner k loop — reduces loop overhead but increases register pressure</td>
+            <td>0.104s</td>
+            <td><span class="v-delta">−88.6%</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="s-body" style="margin-top:16px;">
+        <p>The biggest single jump is V4→V5: shared-memory tiling. Instead of every thread fetching from slow global
+          memory on every iteration, a whole block cooperates to load a tile of A and B into shared memory (fast,
+          on-chip), then each thread reuses those values. This is the fundamental trick behind high-performance GEMM on
+          GPUs, and seeing it drop compute time from 0.32s to 0.12s made it click immediately.</p>
+      </div>
+    </div>
+
+    <!-- SHARED MEMORY TILING DIAGRAM -->
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 720 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <text x="0" y="18" font-family="monospace" font-size="11" font-weight="700" fill="#5C3D1E">Without tiling
+          (V1–V4) — every thread fetches from global memory</text>
+        <rect x="0" y="28" width="200" height="40" rx="8" fill="#7A1A1A" opacity="0.08" />
+        <text x="100" y="44" text-anchor="middle" font-family="monospace" font-size="10" fill="#7A1A1A"
+          font-weight="700">Thread block</text>
+        <text x="100" y="58" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A1A1A"
+          opacity="0.6">32×16 = 512 threads</text>
+        <!-- arrows to global mem -->
+        <line x1="200" y1="48" x2="300" y2="48" stroke="#7A1A1A" stroke-width="1" opacity="0.3" stroke-dasharray="4" />
+        <rect x="300" y="28" width="120" height="40" rx="8" fill="#c9b89a" opacity="0.4" />
+        <text x="360" y="44" text-anchor="middle" font-family="monospace" font-size="10" fill="#5C3D1E"
+          font-weight="700">Global memory</text>
+        <text x="360" y="58" text-anchor="middle" font-family="monospace" font-size="9" fill="#5C3D1E"
+          opacity="0.6">slow, ~600 cycles</text>
+        <text x="440" y="52" font-family="monospace" font-size="9" fill="#7A1A1A" opacity="0.5">← 512 fetches per
+          tile</text>
+
+        <!-- with tiling -->
+        <text x="0" y="108" font-family="monospace" font-size="11" font-weight="700" fill="#1a5c2a">With tiling (V5) —
+          block cooperates to load tile into shared memory once</text>
+        <rect x="0" y="118" width="200" height="50" rx="8" fill="#1a5c2a" opacity="0.08" />
+        <text x="100" y="136" text-anchor="middle" font-family="monospace" font-size="10" fill="#1a5c2a"
+          font-weight="700">Thread block</text>
+        <rect x="20" y="142" width="160" height="18" rx="4" fill="#1a5c2a" opacity="0.15" />
+        <text x="100" y="155" text-anchor="middle" font-family="monospace" font-size="9" fill="#1a5c2a"
+          font-weight="700">Shared memory tile (~5 cycles)</text>
+        <line x1="200" y1="143" x2="300" y2="48" stroke="#c9b89a" stroke-width="1" opacity="0.4" stroke-dasharray="4" />
+        <text x="210" y="132" font-family="monospace" font-size="9" fill="#1a5c2a" opacity="0.7">load once →</text>
+        <text x="210" y="148" font-family="monospace" font-size="9" fill="#1a5c2a" opacity="0.7">reuse 512×</text>
+        <rect x="300" y="118" width="120" height="40" rx="8" fill="#c9b89a" opacity="0.25" />
+        <text x="360" y="134" text-anchor="middle" font-family="monospace" font-size="10" fill="#5C3D1E"
+          font-weight="700">Global memory</text>
+        <text x="360" y="148" text-anchor="middle" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.4">1
+          fetch per tile</text>
+      </svg>
+      <p class="diagram-caption">Shared-memory tiling — the biggest single optimization in the kernel</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- WHAT I LEARNED -->
+    <div class="content-block">
+      <p class="s-label">Takeaways</p>
+      <h2 class="s-title">What three assignments of optimization taught me</h2>
+      <div class="learned-grid">
+        <div class="learned-card">
+          <div class="learned-num">01</div>
+          <div class="learned-text">Parallelism is a spectrum. OpenMP gives you threads for free. MPI distributes across
+            machines. CUDA gives you 163,840 threads, but you have to choreograph every one of them explicitly. Each
+            model has its place.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">02</div>
+          <div class="learned-text">Memory is the real bottleneck. Once you have enough threads, the limiting factor is
+            almost always how fast you can feed them data. Transposing B, using shared memory, coalescing accesses : all
+            memory tricks, not compute tricks.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">03</div>
+          <div class="learned-text">The hardware matters. Block shape, warp alignment, shared memory size, register
+            pressure, you can't optimize a GPU kernel without knowing how the hardware actually executes it. SIMT
+            forced me to think at the hardware level.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">04</div>
+          <div class="learned-text">Sometimes more parallelism hurts. V6 added loop unrolling and slightly regressed at
+            scale, more registers meant fewer active warps, less latency hiding. The compiler was already doing a good
+            job. Knowing when to stop is also a skill.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">Team</p>
+      <h2 class="s-title">Two people, three assignments</h2>
+      <div class="team-list">
+        <div class="team-member team-me">
+          <div class="team-avatar">AD</div>
+          <div>
+            <div class="team-name">Amandine Dejardin</div>
+            <div class="team-role">Full implementation</div>
+          </div>
+        </div>
+        <div class="team-member">
+          <div class="team-avatar">EH</div>
+          <div>
+            <div class="team-name">Ethan Hagiwara</div>
+            <div class="team-role">Full implementation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="project-nav">
+    <a href="amy.html" class="proj-nav-link">
+      <span class="proj-nav-label">← Previous</span>
+      <span class="proj-nav-name">Amy Compiler</span>
+    </a>
+    <a href="projects.html" class="proj-nav-link" style="text-align:right;">
+      <span class="proj-nav-label">Next →</span>
+      <span class="proj-nav-name">RISC V Multicycle processor</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="footer-top">
+      <span>© 2026</span>
+      <div class="footer-nav">
+        <a href="index.html">Home</a><span class="footer-dot">·</span>
+        <a href="projects.html">Project</a><span class="footer-dot">·</span>
+        <a href="about.html">About</a>
+      </div>
+      <span>Amandine Dejardin</span>
+    </div>
+    <div class="footer-blobs">
+      <div class="blob blob-yellow"></div>
+      <div class="blob blob-blue"></div>
+      <div class="blob blob-red"></div>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+      fx += (mx - fx) * 0.12; fy += (my - fy) * 0.12;
+      follower.style.left = fx + 'px'; follower.style.top = fy + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    document.querySelectorAll('a,button').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2)'; cursor.style.background = '#E8B84B'; });
+      el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; cursor.style.background = '#7A1A1A'; });
+    });
+
+    // Scroll reveal
+    const blocks = document.querySelectorAll('.content-block, .diagram-wrap');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          // animate bars if inside this element
+          e.target.querySelectorAll('.bar-fill').forEach(bar => {
+            setTimeout(() => { bar.style.width = bar.dataset.width; }, 100);
+          });
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    blocks.forEach(b => obs.observe(b));
+  </script>
+</body>
+
+</html>

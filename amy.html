@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amy Compiler — Amandine Dejardin</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bordeaux: #7A1A1A;
+    --jaune: #E8B84B;
+    --bleu: #2f5da1;
+    --creme: #F5F0E8;
+    --brun: #5C3D1E;
+    --blanc: #ffffff;
+    --noir: #1A1008;
+    --violet: #4A3B8C;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Satoshi', sans-serif; background: var(--blanc); color: var(--noir); overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; transition: transform 0.15s ease, background 0.2s ease; transform: translate(-50%, -50%); }
+  .cursor-follower { width: 36px; height: 36px; border: 1.5px solid var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9998; transition: transform 0.35s ease; transform: translate(-50%, -50%); opacity: 0.5; }
+
+  nav { position: fixed; top: 20px; right: 24px; display: flex; z-index: 100; opacity: 0; animation: fadeDown 0.6s 0.3s forwards; }
+  .nav-btn { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; border: none; cursor: none; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: transform 0.25s ease, filter 0.25s ease; }
+  .nav-btn:hover { transform: translateY(-4px) scale(1.04); filter: brightness(0.95); }
+  .nav-home { width: 110px; height: 90px; background: #f7ce53; mask-image: url("shapes/home-shape.svg"); -webkit-mask-image: url("shapes/home-shape.svg"); color: var(--bleu); mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
+  .nav-project { width: 95px; height: 90px; background: var(--bleu); color: var(--blanc); border-radius: 8px; }
+  .nav-about { width: 95px; height: 90px; background: var(--bordeaux); color: var(--creme); border-radius: 50%; }
+
+  .back-link { position: fixed; top: 36px; left: 36px; z-index: 100; display: inline-flex; align-items: center; gap: 8px; font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 700; color: var(--creme); text-decoration: none; opacity: 0; animation: fadeDown 0.5s 0.5s forwards; transition: color 0.2s; }
+  .back-link:hover { color: var(--jaune); }
+  .back-arrow { transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .back-link:hover .back-arrow { transform: translateX(-5px); }
+
+  /* HERO */
+  .hero { min-height: 62vh; background: #2a1f4a; padding: 140px 56px 64px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+  .hero-label { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 16px; opacity: 0; animation: slideUp 0.6s 0.5s forwards; }
+  .hero-title { font-family: 'Clash Display', sans-serif; font-size: clamp(56px, 9vw, 128px); font-weight: 800; color: var(--blanc); line-height: 0.88; letter-spacing: -4px; opacity: 0; animation: slideUp 0.9s 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .hero-title .dim { color: rgba(255,255,255,0.28); }
+  .hero-meta-bar { display: flex; gap: 40px; margin-top: 40px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.12); opacity: 0; animation: slideUp 0.6s 0.9s forwards; flex-wrap: wrap; }
+  .hero-meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 5px; }
+  .hero-meta-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
+  .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero-tag { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 100px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); }
+
+  /* floating code decoration in hero */
+  .hero-code { position: absolute; right: 56px; top: 50%; transform: translateY(-50%); font-family: monospace; font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.12); pointer-events: none; user-select: none; opacity: 0; animation: fadeDown 1s 1.2s forwards; }
+
+  /* CONTENT */
+  .content { max-width: 840px; margin: 0 auto; padding: 80px 48px; }
+  .s-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux); opacity: 0.6; margin-bottom: 10px; }
+  .s-title { font-family: 'Clash Display', sans-serif; font-size: clamp(26px, 3vw, 38px); font-weight: 700; color: var(--bordeaux); letter-spacing: -0.5px; line-height: 1.05; margin-bottom: 20px; }
+  .s-body { font-size: 15px; line-height: 1.78; color: rgba(26,16,8,0.68); }
+  .s-body p + p { margin-top: 14px; }
+
+  .content-block { margin-bottom: 72px; opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
+  .content-block.visible { opacity: 1; transform: translateY(0); }
+  .divider { width: 100%; height: 1px; background: rgba(92,61,30,0.1); margin: 56px 0; }
+
+  /* DIAGRAM WRAPPER */
+  .diagram-wrap { background: var(--creme); border-radius: 16px; padding: 40px 32px; margin: 32px 0; opacity: 0; transform: translateY(24px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
+  .diagram-wrap.visible { opacity: 1; transform: translateY(0); }
+  .diagram-caption { font-size: 12px; color: var(--brun); opacity: 0.5; text-align: center; margin-top: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* CODE BLOCK */
+  .code-block { background: #1e1733; border-radius: 12px; padding: 24px 28px; margin: 24px 0; overflow-x: auto; }
+  .code-block pre { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.65; color: #c9b8ff; }
+  .code-block .kw { color: #e8b84b; }
+  .code-block .cm { color: #5a4f7a; font-style: italic; }
+  .code-block .str { color: #7ec8a0; }
+  .code-block .fn { color: #9ecbf5; }
+
+  /* ROLE BOX */
+  .role-box { background: var(--creme); border-left: 4px solid var(--bordeaux); border-radius: 0 12px 12px 0; padding: 24px 28px; margin: 32px 0; }
+  .role-box-title { font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 700; color: var(--bordeaux); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px; }
+  .role-box ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .role-box li { font-size: 14px; line-height: 1.6; color: var(--brun); display: flex; gap: 10px; }
+  .role-box li::before { content: '→'; color: var(--bordeaux); font-weight: 700; flex-shrink: 0; }
+
+  /* CHALLENGE CARDS */
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .challenge-card { background: var(--blanc); border: 1.5px solid rgba(74,59,140,0.12); border-radius: 12px; padding: 22px; }
+  .challenge-icon { font-size: 22px; margin-bottom: 10px; }
+  .challenge-title { font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 700; color: var(--violet); margin-bottom: 8px; }
+  .challenge-desc { font-size: 13px; line-height: 1.65; color: rgba(26,16,8,0.6); }
+
+  /* PIPELINE STEPS (weekly) */
+  .weeks-grid { display: flex; flex-direction: column; gap: 0; margin-top: 24px; }
+  .week-row { display: flex; gap: 20px; padding: 18px 0; border-bottom: 1px solid rgba(92,61,30,0.08); align-items: flex-start; }
+  .week-row:last-child { border-bottom: none; }
+  .week-badge { flex-shrink: 0; width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .badge-1 { background: rgba(232,184,75,0.15); color: #9A6F00; }
+  .badge-2 { background: rgba(47,93,161,0.1); color: var(--bleu); }
+  .badge-3 { background: rgba(74,59,140,0.1); color: var(--violet); }
+  .badge-4 { background: rgba(122,26,26,0.08); color: var(--bordeaux); }
+  .badge-5 { background: rgba(58,107,53,0.1); color: #2d5228; }
+  .badge-ext { background: rgba(92,61,30,0.08); color: var(--brun); }
+  .week-content { }
+  .week-title { font-family: 'Clash Display', sans-serif; font-size: 17px; font-weight: 700; color: var(--noir); margin-bottom: 5px; }
+  .week-desc { font-size: 13px; line-height: 1.65; color: rgba(26,16,8,0.6); }
+
+  /* LEARNED */
+  .learned-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .learned-card { background: var(--creme); border-radius: 12px; padding: 20px; }
+  .learned-num { font-size: 11px; font-weight: 800; color: var(--bordeaux); opacity: 0.4; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .learned-text { font-size: 14px; line-height: 1.65; color: var(--brun); }
+
+  /* TEAM */
+  .team-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .team-member { display: flex; align-items: center; gap: 10px; background: var(--creme); border-radius: 100px; padding: 8px 16px 8px 8px; }
+  .team-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--violet); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--blanc); }
+  .team-name { font-size: 13px; font-weight: 600; color: var(--brun); }
+  .team-me { background: rgba(122,26,26,0.08); border: 1.5px solid rgba(122,26,26,0.2); }
+  .team-me .team-avatar { background: var(--bordeaux); }
+
+  /* PROJECT NAV */
+  .project-nav { background: var(--creme); padding: 48px; display: flex; justify-content: space-between; align-items: center; }
+  .proj-nav-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
+  .proj-nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brun); opacity: 0.4; }
+  .proj-nav-name { font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 700; color: var(--bordeaux); transition: letter-spacing 0.3s ease; }
+  .proj-nav-link:hover .proj-nav-name { letter-spacing: 0.5px; }
+
+  /* FOOTER */
+  footer { background: var(--blanc); padding: 32px 48px 0; }
+  .footer-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 28px; border-bottom: 1px solid rgba(92,61,30,0.12); font-size: 14px; color: var(--brun); font-weight: 500; }
+  .footer-nav { display: flex; gap: 8px; align-items: center; }
+  .footer-nav a { color: var(--brun); text-decoration: none; font-weight: 600; }
+  .footer-nav a:hover { color: var(--bordeaux); }
+  .footer-dot { opacity: 0.4; }
+  .footer-blobs { display: flex; align-items: flex-end; height: 120px; overflow: hidden; }
+  .blob { height: 105px; flex-shrink: 0; }
+  .blob-yellow { width: 34%; background: var(--jaune); border-radius: 70px 70px 0 0; }
+  .blob-blue { width: 34%; background: var(--bleu); border-radius: 0; }
+  .blob-red { width: 32%; background: #C8431A; border-radius: 50% 50% 0 0; }
+
+  @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follower" id="follower"></div>
+<a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+
+<nav>
+  <a href="index.html" class="nav-btn nav-home">Home</a>
+  <a href="projects.html" class="nav-btn nav-project">Project</a>
+  <a href="about.html" class="nav-btn nav-about">About</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-code">
+object Hanoi<br>
+&nbsp;&nbsp;def solve(n: Int) :=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (n == 1) then 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else 2 * solve(n-1) + 1<br>
+&nbsp;&nbsp;end solve<br>
+end Hanoi
+  </div>
+  <p class="hero-label">Project 03 — CS-320 · EPFL · 2025</p>
+  <h1 class="hero-title">
+    <div>Amy Compiler</span></div>
+    <div class="dim">+ C Backend</div>
+  </h1>
+  <div class="hero-meta-bar">
+    <div><div class="hero-meta-label">Team</div><div class="hero-meta-value">3 people</div></div>
+    <div><div class="hero-meta-label">Duration</div><div class="hero-meta-value">6 weeks (labs) + extension</div></div>
+    <div><div class="hero-meta-label">Stack</div><div class="hero-tags"><span class="hero-tag">Scala</span><span class="hero-tag">C</span><span class="hero-tag">Compilers</span><span class="hero-tag">WebAssembly</span></div></div>
+  </div>
+</section>
+
+<div class="content">
+
+  <!-- WHAT IS AMY -->
+  <div class="content-block">
+    <p class="s-label">The project</p>
+    <h2 class="s-title">Building a compiler from scratch, one stage per week</h2>
+    <div class="s-body">
+      <p>Amy is a small functional programming language with algebraic data types, pattern matching, and a module system. Over 5 weeks of labs, we built a complete compiler for it in Scala, from the very first character of source code all the way to executable WebAssembly bytecode. Then, as a final extension project, we added a second backend that compiles Amy to C instead.</p>
+      <p>This was not a "plug-in a library" kind of project. Every stage was built from the ground up, each one feeding into the next.</p>
+    </div>
+  </div>
+
+  <!-- PIPELINE DIAGRAM -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 760 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#5C3D1E" opacity="0.4"/>
+        </marker>
+      </defs>
+      <!-- boxes -->
+      <rect x="0" y="28" width="100" height="44" rx="10" fill="#E8B84B" opacity="0.25"/>
+      <text x="50" y="47" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#5C3D1E">Lexer</text>
+      <text x="50" y="62" text-anchor="middle" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.6">tokens</text>
+
+      <rect x="130" y="28" width="100" height="44" rx="10" fill="#2f5da1" opacity="0.15"/>
+      <text x="180" y="47" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#2f5da1">Parser</text>
+      <text x="180" y="62" text-anchor="middle" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.7">raw AST</text>
+
+      <rect x="260" y="28" width="120" height="44" rx="10" fill="#4A3B8C" opacity="0.12"/>
+      <text x="320" y="47" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#4A3B8C">Name analyser</text>
+      <text x="320" y="62" text-anchor="middle" font-family="monospace" font-size="9" fill="#4A3B8C" opacity="0.7">scoped AST</text>
+
+      <rect x="410" y="28" width="110" height="44" rx="10" fill="#3A6B35" opacity="0.12"/>
+      <text x="465" y="47" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#3A6B35">Type checker</text>
+      <text x="465" y="62" text-anchor="middle" font-family="monospace" font-size="9" fill="#3A6B35" opacity="0.7">typed AST</text>
+
+      <!-- two backends -->
+      <rect x="550" y="4" width="100" height="40" rx="10" fill="#5C3D1E" opacity="0.1"/>
+      <text x="600" y="21" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#5C3D1E">Wasm</text>
+      <text x="600" y="35" text-anchor="middle" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.6">backend</text>
+
+      <rect x="550" y="56" width="100" height="40" rx="10" fill="#7A1A1A" opacity="0.12"/>
+      <text x="600" y="73" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#7A1A1A">C</text>
+      <text x="600" y="87" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A1A1A" opacity="0.6">backend ✦</text>
+
+      <!-- arrows between stages -->
+      <line x1="100" y1="50" x2="128" y2="50" stroke="#5C3D1E" stroke-width="1.5" opacity="0.3" marker-end="url(#arr)"/>
+      <line x1="230" y1="50" x2="258" y2="50" stroke="#5C3D1E" stroke-width="1.5" opacity="0.3" marker-end="url(#arr)"/>
+      <line x1="380" y1="50" x2="408" y2="50" stroke="#5C3D1E" stroke-width="1.5" opacity="0.3" marker-end="url(#arr)"/>
+      <!-- split arrow to two backends -->
+      <line x1="520" y1="50" x2="548" y2="24" stroke="#5C3D1E" stroke-width="1.5" opacity="0.3" marker-end="url(#arr)"/>
+      <line x1="520" y1="50" x2="548" y2="76" stroke="#7A1A1A" stroke-width="1.5" opacity="0.4" marker-end="url(#arr)"/>
+      <line x1="520" y1="50" x2="520" y2="50" stroke="none"/>
+      <line x1="518" y1="50" x2="521" y2="50" stroke="#5C3D1E" stroke-width="1.5" opacity="0.3"/>
+
+      <!-- source label -->
+      <text x="0" y="12" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.4">Amy source (.amy)</text>
+      <text x="655" y="28" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.4">.wat</text>
+      <text x="655" y="80" font-family="monospace" font-size="9" fill="#7A1A1A" opacity="0.5">.c  ✦ our extension</text>
+    </svg>
+    <p class="diagram-caption">Full compiler pipeline — 5 labs + C backend extension</p>
+  </div>
+
+  <!-- THE WEEKLY LABS -->
+  <div class="content-block">
+    <p class="s-label">The labs</p>
+    <h2 class="s-title">One week, one stage</h2>
+    <div class="weeks-grid">
+      <div class="week-row">
+        <div class="week-badge badge-1">Wk 1</div>
+        <div class="week-content">
+          <div class="week-title">Lexer — source text → token stream</div>
+          <div class="week-desc">Read raw characters and group them into meaningful tokens: keywords, identifiers, literals, operators. Handle edge cases like multi-line comments, escaped strings, and invalid characters. This is the lowest level of the pipeline — no structure yet, just words.</div>
+        </div>
+      </div>
+      <div class="week-row">
+        <div class="week-badge badge-2">Wk 2</div>
+        <div class="week-content">
+          <div class="week-title">Parser — token stream → raw AST</div>
+          <div class="week-desc">Apply grammar rules to build a tree from the token stream. Handle operator precedence, nested expressions, if/else, pattern matching syntax, and module declarations. Produce a meaningful error if the input doesn't conform to Amy's grammar.</div>
+        </div>
+      </div>
+      <div class="week-row">
+        <div class="week-badge badge-3">Wk 3</div>
+        <div class="week-content">
+          <div class="week-title">Name analyser — resolve identifiers, check scopes</div>
+          <div class="week-desc">Walk the raw AST and resolve every name to its definition. Catch uses of undeclared variables, duplicate definitions, and module import errors. After this stage, every identifier in the tree points unambiguously to the right declaration.</div>
+        </div>
+      </div>
+      <div class="week-row">
+        <div class="week-badge badge-4">Wk 4</div>
+        <div class="week-content">
+          <div class="week-title">Type checker — verify types, produce typed AST</div>
+          <div class="week-desc">Annotate every expression with its type and verify consistency. Handle type inference for let-bindings, check exhaustiveness of pattern matches, and reject any ill-typed program with a clear error. The typed AST is what both backends consume.</div>
+        </div>
+      </div>
+      <div class="week-row">
+        <div class="week-badge badge-5">Wk 5</div>
+        <div class="week-content">
+          <div class="week-title">WebAssembly backend — typed AST → .wat bytecode</div>
+          <div class="week-desc">Translate the typed AST into WebAssembly text format. Map Amy's ADTs onto Wasm's linear memory, handle the stack machine's calling convention, and emit valid .wat that can be run in any Wasm runtime.</div>
+        </div>
+      </div>
+      <div class="week-row">
+        <div class="week-badge badge-ext">Ext.</div>
+        <div class="week-content">
+          <div class="week-title">C backend — our extension</div>
+          <div class="week-desc">Add a second backend that compiles the same typed AST to portable C. All the hard problems Wasm hides, ADT encoding, expression-to-statement lowering, name mangling, had to be solved explicitly. This is the bulk of the extension work, described in detail below.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- C BACKEND DEEP DIVE -->
+  <div class="content-block">
+    <p class="s-label">The extension</p>
+    <h2 class="s-title">Why C is harder than WebAssembly</h2>
+    <div class="s-body">
+      <p>WebAssembly is a clean compilation target : it has sum types, a structured stack, and no C-style expression/statement split. C has none of that. Adding a C backend forced us to solve every problem Wasm had conveniently abstracted away.</p>
+    </div>
+
+    <!-- ADT encoding diagram -->
+    <div class="diagram-wrap" style="margin-top:28px;">
+      <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <!-- Amy side -->
+        <text x="0" y="16" font-family="monospace" font-size="11" font-weight="700" fill="#4A3B8C">Amy ADT</text>
+        <rect x="0" y="24" width="260" height="36" rx="8" fill="#4A3B8C" opacity="0.08"/>
+        <text x="12" y="40" font-family="monospace" font-size="11" fill="#4A3B8C">Cons(head: Int, tail: List)</text>
+        <text x="12" y="54" font-family="monospace" font-size="9" fill="#4A3B8C" opacity="0.5">algebraic data type — no direct C equivalent</text>
+
+        <!-- arrow -->
+        <text x="300" y="46" font-family="monospace" font-size="18" fill="#5C3D1E" opacity="0.3">→</text>
+
+        <!-- C side: heap layout -->
+        <text x="340" y="16" font-family="monospace" font-size="11" font-weight="700" fill="#7A1A1A">C heap layout</text>
+        <rect x="340" y="24" width="64" height="36" rx="0" fill="#7A1A1A" opacity="0.12"/>
+        <text x="372" y="39" text-anchor="middle" font-family="monospace" font-size="10" fill="#7A1A1A" font-weight="700">tag</text>
+        <text x="372" y="52" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A1A1A" opacity="0.6">slot[0]</text>
+
+        <rect x="404" y="24" width="64" height="36" rx="0" fill="#2f5da1" opacity="0.1"/>
+        <text x="436" y="39" text-anchor="middle" font-family="monospace" font-size="10" fill="#2f5da1" font-weight="700">head</text>
+        <text x="436" y="52" text-anchor="middle" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.6">slot[1]</text>
+
+        <rect x="468" y="24" width="64" height="36" rx="0" fill="#2f5da1" opacity="0.1"/>
+        <text x="500" y="39" text-anchor="middle" font-family="monospace" font-size="10" fill="#2f5da1" font-weight="700">tail*</text>
+        <text x="500" y="52" text-anchor="middle" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.6">slot[2]</text>
+
+        <text x="340" y="80" font-family="monospace" font-size="9" fill="#5C3D1E" opacity="0.45">intptr_t[n+1] — tag in slot 0, fields in slots 1..n</text>
+
+        <!-- type erasure note -->
+        <rect x="0" y="100" width="700" height="52" rx="10" fill="#E8B84B" opacity="0.08"/>
+        <text x="16" y="118" font-family="monospace" font-size="10" font-weight="700" fill="#9A6F00">Type erasure</text>
+        <text x="16" y="134" font-family="monospace" font-size="10" fill="#9A6F00" opacity="0.75">Every Amy value becomes intptr_t in C,  large enough for a 32-bit int or a 64-bit pointer.</text>
+        <text x="16" y="148" font-family="monospace" font-size="10" fill="#9A6F00" opacity="0.75">The type checker already verified correctness, generated C doesn't need to re-check.</text>
+      </svg>
+      <p class="diagram-caption">ADT encoding — from Amy constructors to flat C heap arrays</p>
+    </div>
+  </div>
+
+  <!-- CHALLENGES -->
+  <div class="content-block">
+    <p class="s-label">Hard problems</p>
+    <h2 class="s-title">Three things C doesn't give you for free</h2>
+    <div class="challenge-grid">
+      <div class="challenge-card">
+        <div class="challenge-icon">Ⅰ</div>
+        <div class="challenge-title">Expressions vs. statements</div>
+        <div class="challenge-desc">Amy's if/else and match are expressions, they produce values. C's if is a statement, it doesn't. We used GCC statement-expressions ({ ... }) to bridge the gap, wrapping C statements into expression context wherever needed.</div>
+      </div>
+      <div class="challenge-card">
+        <div class="challenge-icon">Ⅱ</div>
+        <div class="challenge-title">Safe nested pattern matching</div>
+        <div class="challenge-desc">A nested pattern like Cons(Cons(x, _), _) needs to read inner fields before the outer tag is confirmed. We guard every field load with a tag check first — if the tag fails, a safe default propagates instead of an invalid memory access.</div>
+      </div>
+      <div class="challenge-card">
+        <div class="challenge-icon">Ⅲ</div>
+        <div class="challenge-title">Evaluation order</div>
+        <div class="challenge-desc">Amy guarantees left-to-right argument evaluation. C doesn't. For constructor calls, we evaluate every argument into a temporary variable first, then allocate and fill the struct. This ensures consistent behaviour across all C compilers.</div>
+      </div>
+      <div class="challenge-card">
+        <div class="challenge-icon">Ⅳ</div>
+        <div class="challenge-title">Name mangling</div>
+        <div class="challenge-desc">Amy modules allow List.Cons and Tree.Cons to coexist. C has a flat global namespace. Every Amy identifier becomes Module_name in the generated C, a simple but essential transformation to avoid clashes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATTERN MATCHING DIAGRAM -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+      <text x="0" y="16" font-family="monospace" font-size="11" font-weight="700" fill="#4A3B8C">Amy match expression</text>
+      <rect x="0" y="24" width="280" height="80" rx="8" fill="#4A3B8C" opacity="0.06"/>
+      <text x="12" y="42" font-family="monospace" font-size="11" fill="#4A3B8C">x match {</text>
+      <text x="12" y="58" font-family="monospace" font-size="11" fill="#4A3B8C">  case Cons(h, _) =&gt; h</text>
+      <text x="12" y="74" font-family="monospace" font-size="11" fill="#4A3B8C">  case Nil()     =&gt; 0</text>
+      <text x="12" y="90" font-family="monospace" font-size="11" fill="#4A3B8C">}</text>
+
+      <text x="320" y="16" font-family="monospace" font-size="11" font-weight="700" fill="#7A1A1A">Generated C (lowered)</text>
+      <rect x="320" y="24" width="380" height="160" rx="8" fill="#1e1733" opacity="0.92"/>
+      <text x="334" y="44" font-family="monospace" font-size="10" fill="#e8b84b">intptr_t</text>
+      <text x="390" y="44" font-family="monospace" font-size="10" fill="#c9b8ff"> result = 0, matched = 0;</text>
+      <text x="334" y="60" font-family="monospace" font-size="10" fill="#5a4f7a">/* case Cons */</text>
+      <text x="334" y="76" font-family="monospace" font-size="10" fill="#e8b84b">if</text>
+      <text x="350" y="76" font-family="monospace" font-size="10" fill="#c9b8ff"> (scrut[0] == TAG_Cons) {</text>
+      <text x="348" y="92" font-family="monospace" font-size="10" fill="#c9b8ff">  result = scrut[1]; matched = 1; }</text>
+      <text x="334" y="108" font-family="monospace" font-size="10" fill="#e8b84b">if</text>
+      <text x="350" y="108" font-family="monospace" font-size="10" fill="#c9b8ff"> (!matched &amp;&amp; scrut[0] == TAG_Nil) {</text>
+      <text x="348" y="124" font-family="monospace" font-size="10" fill="#c9b8ff">  result = 0; matched = 1; }</text>
+      <text x="334" y="140" font-family="monospace" font-size="10" fill="#e8b84b">if</text>
+      <text x="350" y="140" font-family="monospace" font-size="10" fill="#c9b8ff"> (!matched) amy_error(</text>
+      <text x="348" y="156" font-family="monospace" font-size="10" fill="#7ec8a0">  "Match error!");</text>
+      <text x="334" y="172" font-family="monospace" font-size="10" fill="#5a4f7a">// value of match = result</text>
+    </svg>
+    <p class="diagram-caption">Pattern matching lowering — matched flag + shared result variable</p>
+  </div>
+
+  <!-- CODE EXAMPLE -->
+  <div class="content-block">
+    <p class="s-label">In practice</p>
+    <h2 class="s-title">Amy → C in one command</h2>
+    <div class="s-body"><p>Add <code style="background:var(--creme);padding:2px 7px;border-radius:4px;font-size:13px;font-family:monospace;">--c</code> to the compiler invocation — everything else stays the same.</p></div>
+    <div class="code-block">
+      <pre><span class="cm"># Compile Amy source to C</span>
+sbt <span class="str">"run --c ./library/Std.amy ./examples/Hanoi.amy"</span>
+
+<span class="cm"># Compile generated C and run</span>
+gcc -o hanoi cout/Hanoi.c cout/amy_runtime.c
+./hanoi
+<span class="cm"># → Hanoi for 4 plates: 15</span></pre>
+    </div>
+    <div class="s-body" style="margin-top:16px;"><p>The <code style="background:var(--creme);padding:2px 7px;border-radius:4px;font-size:13px;font-family:monospace;">amy_runtime.c</code> is a small handwritten C file that implements the standard library (print, read, string operations). Having two backends also gave us differential testing for free — any Amy program from the labs could be run through both backends and outputs compared.</p></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- WHAT I LEARNED -->
+  <div class="content-block">
+    <p class="s-label">Takeaways</p>
+    <h2 class="s-title">What building a compiler teaches you</h2>
+    <div class="learned-grid">
+      <div class="learned-card">
+        <div class="learned-num">01</div>
+        <div class="learned-text">Languages are stacked abstractions. Every feature you take for granted in a language, pattern matching, type inference, closures,
+           is someone else's lowering problem solved cleverly.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">02</div>
+        <div class="learned-text">C's expression/statement split is a real constraint. Modern languages paper over it with tricks, statement-expressions, continuations, SSA form. Writing a backend forces you to pick one.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">03</div>
+        <div class="learned-text">Type erasure is a superpower. Once the type checker has verified the program, generated code doesn't need types at all. Every value as intptr_t made the whole backend much simpler.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">04</div>
+        <div class="learned-text">Two backends = free test suite. Running every lab program through both Wasm and C backends and comparing outputs caught several subtle bugs in both, a trick borrowed from differential fuzzing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TEAM -->
+  <div class="content-block">
+    <p class="s-label">Team</p>
+    <h2 class="s-title">Three people, one semester</h2>
+    <div class="team-list">
+      <div class="team-member team-me">
+        <div class="team-avatar">AD</div>
+        <div><div class="team-name">Amandine Dejardin</div></div>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar">TH</div>
+        <div><div class="team-name">Tarek Hanna</div></div>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar">EH</div>
+        <div><div class="team-name">Ethan Hagiwara</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PROJECT NAV -->
+<div class="project-nav">
+  <a href="dkvs.html" class="proj-nav-link">
+    <span class="proj-nav-label">← Previous</span>
+    <span class="proj-nav-name">Distributed Key Value Store</span>
+  </a>
+  <a href="gpu.html" class="proj-nav-link" style="text-align:right;">
+    <span class="proj-nav-label">Next →</span>
+    <span class="proj-nav-name">GPU Matrix Multiplication</span>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-top">
+    <span>© 2026</span>
+    <div class="footer-nav">
+      <a href="index.html">Home</a><span class="footer-dot">·</span>
+      <a href="projects.html">Project</a><span class="footer-dot">·</span>
+      <a href="about.html">About</a>
+    </div>
+    <span>Amandine Dejardin</span>
+  </div>
+  <div class="footer-blobs">
+    <div class="blob blob-yellow"></div>
+    <div class="blob blob-blue"></div>
+    <div class="blob blob-red"></div>
+  </div>
+</footer>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  const follower = document.getElementById('follower');
+  let mx=0,my=0,fx=0,fy=0;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+  function animateCursor() {
+    cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+    fx+=(mx-fx)*0.12; fy+=(my-fy)*0.12;
+    follower.style.left=fx+'px'; follower.style.top=fy+'px';
+    requestAnimationFrame(animateCursor);
+  }
+  animateCursor();
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2)'; cursor.style.background='#E8B84B'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; cursor.style.background='#7A1A1A'; });
+  });
+  const blocks = document.querySelectorAll('.content-block, .diagram-wrap');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  blocks.forEach(b => obs.observe(b));
+</script>
+</body>
+</html>
