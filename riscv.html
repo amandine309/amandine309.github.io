@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RISC-V Processor - Amandine Dejardin</title>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bordeaux: #7A1A1A;
+    --jaune: #E8B84B;
+    --bleu: #2f5da1;
+    --creme: #F5F0E8;
+    --brun: #5C3D1E;
+    --blanc: #ffffff;
+    --noir: #1A1008;
+    --vert: #2d5a1b;
+    --orange: #8B4513;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Satoshi', sans-serif; background: var(--blanc); color: var(--noir); overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; transition: transform 0.15s ease, background 0.2s ease; transform: translate(-50%, -50%); }
+  .cursor-follower { width: 36px; height: 36px; border: 1.5px solid var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9998; transition: transform 0.35s ease; transform: translate(-50%, -50%); opacity: 0.5; }
+
+  nav { position: fixed; top: 20px; right: 24px; display: flex; z-index: 100; opacity: 0; animation: fadeDown 0.6s 0.3s forwards; }
+  .nav-btn { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; border: none; cursor: none; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: transform 0.25s ease, filter 0.25s ease; }
+  .nav-btn:hover { transform: translateY(-4px) scale(1.04); filter: brightness(0.95); }
+  .nav-home { width: 110px; height: 90px; background: #f7ce53; mask-image: url("shapes/home-shape.svg"); -webkit-mask-image: url("shapes/home-shape.svg"); color: var(--bleu); mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
+  .nav-project { width: 95px; height: 90px; background: var(--bleu); color: var(--blanc); border-radius: 8px; }
+  .nav-about { width: 95px; height: 90px; background: var(--bordeaux); color: var(--creme); border-radius: 50%; }
+
+  .back-link { position: fixed; top: 36px; left: 36px; z-index: 100; display: inline-flex; align-items: center; gap: 8px; font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 700; color: var(--brun); text-decoration: none; opacity: 0; animation: fadeDown 0.5s 0.5s forwards; transition: color 0.2s; }
+  .back-link:hover { color: var(--bordeaux); }
+  .back-arrow { transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .back-link:hover .back-arrow { transform: translateX(-5px); }
+
+  /* HERO */
+  .hero { min-height: 65vh; background: #392d12; padding: 140px 56px 64px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+  .hero-circuit { position: absolute; inset: 0; opacity: 0.06; background-image: repeating-linear-gradient(0deg, #E8B84B 0px, #E8B84B 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #E8B84B 0px, #E8B84B 1px, transparent 1px, transparent 40px); pointer-events: none; }
+  .hero-label { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; opacity: 0; animation: slideUp 0.6s 0.5s forwards; position: relative; z-index: 2; }
+  .hero-title { font-family: 'Clash Display', sans-serif; font-size: clamp(50px, 8vw, 118px); font-weight: 800; color: var(--blanc); line-height: 0.88; letter-spacing: -4px; opacity: 0; animation: slideUp 0.9s 0.6s cubic-bezier(0.16,1,0.3,1) forwards; position: relative; z-index: 2; }
+  .hero-title .dim { color: rgba(255,255,255,0.2); }
+  .hero-meta-bar { display: flex; gap: 40px; margin-top: 40px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08); opacity: 0; animation: slideUp 0.6s 0.9s forwards; flex-wrap: wrap; position: relative; z-index: 2; }
+  .hero-meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 5px; }
+  .hero-meta-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero-tag { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 100px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65); }
+
+  /* CONTENT */
+  .content { max-width: 860px; margin: 0 auto; padding: 80px 48px; }
+  .s-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux); opacity: 0.6; margin-bottom: 10px; }
+  .s-title { font-family: 'Clash Display', sans-serif; font-size: clamp(26px, 3vw, 38px); font-weight: 700; color: var(--bordeaux); letter-spacing: -0.5px; line-height: 1.05; margin-bottom: 20px; }
+  .s-body { font-size: 15px; line-height: 1.78; color: rgba(26,16,8,0.68); }
+  .s-body p + p { margin-top: 14px; }
+
+  .content-block { margin-bottom: 72px; opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
+  .content-block.visible { opacity: 1; transform: translateY(0); }
+  .divider { width: 100%; height: 1px; background: rgba(92,61,30,0.1); margin: 56px 0; }
+
+  /* DIAGRAM */
+  .diagram-wrap { background: var(--creme); border-radius: 16px; padding: 36px 32px; margin: 32px 0; opacity: 0; transform: translateY(24px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
+  .diagram-wrap.visible { opacity: 1; transform: translateY(0); }
+  .diagram-wrap.dark { background: #f8f4f4; }
+  .diagram-caption { font-size: 12px; color: var(--brun); opacity: 0.5; text-align: center; margin-top: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .diagram-wrap.dark .diagram-caption { color: rgba(255,255,255,0.2); }
+
+  /* LABS STEPS */
+  .labs { display: flex; flex-direction: column; gap: 0; margin-top: 28px; }
+  .lab-row { display: flex; gap: 0; }
+  .lab-left { display: flex; flex-direction: column; align-items: center; width: 60px; flex-shrink: 0; }
+  .lab-circle { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .lab-line { width: 2px; flex: 1; min-height: 20px; }
+  .lab-row:last-child .lab-line { display: none; }
+  .lab-content { padding: 0 0 36px 20px; flex: 1; }
+  .lab-title { font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .lab-desc { font-size: 14px; line-height: 1.7; color: rgba(26,16,8,0.62); }
+
+  .lab-1 .lab-circle { background: rgba(232,184,75,0.15); color: #9A6F00; }
+  .lab-1 .lab-line { background: rgba(232,184,75,0.2); }
+  .lab-1 .lab-title { color: #9A6F00; }
+  .lab-2 .lab-circle { background: rgba(47,93,161,0.12); color: var(--bleu); }
+  .lab-2 .lab-line { background: rgba(47,93,161,0.15); }
+  .lab-2 .lab-title { color: var(--bleu); }
+  .lab-3 .lab-circle { background: rgba(45,90,27,0.1); color: var(--vert); }
+  .lab-3 .lab-line { background: rgba(45,90,27,0.12); }
+  .lab-3 .lab-title { color: var(--vert); }
+  .lab-4 .lab-circle { background: rgba(139,69,19,0.1); color: var(--orange); }
+  .lab-4 .lab-line { background: rgba(139,69,19,0.12); }
+  .lab-4 .lab-title { color: var(--orange); }
+  .lab-5 .lab-circle { background: rgba(122,26,26,0.1); color: var(--bordeaux); }
+  .lab-5 .lab-line { background: rgba(122,26,26,0.1); }
+  .lab-5 .lab-title { color: var(--bordeaux); }
+
+  /* STATES TABLE */
+  .states-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+  .state-card { background: var(--blanc); border: 1.5px solid rgba(92,61,30,0.08); border-radius: 10px; padding: 16px; }
+  .state-name { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; color: var(--bordeaux); margin-bottom: 6px; }
+  .state-desc { font-size: 12px; line-height: 1.6; color: rgba(26,16,8,0.58); }
+  .state-cycle { font-size: 10px; font-weight: 800; color: var(--brun); opacity: 0.4; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* MMIO TABLE */
+  .mmio-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+  .mmio-table th { text-align: left; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brun); opacity: 0.45; padding: 8px 12px; border-bottom: 1px solid rgba(92,61,30,0.1); }
+  .mmio-table td { padding: 12px; border-bottom: 1px solid rgba(92,61,30,0.06); font-family: monospace; font-size: 13px; color: rgba(26,16,8,0.7); }
+  .mmio-table td:first-child { font-weight: 700; color: var(--bordeaux); }
+  .mmio-table td:last-child { font-family: 'Satoshi', sans-serif; font-size: 12px; color: rgba(26,16,8,0.5); }
+
+  /* INTERRUPT STEPS */
+  .int-steps { display: flex; gap: 0; margin-top: 24px; overflow-x: auto; padding-bottom: 8px; }
+  .int-step { flex-shrink: 0; width: 110px; display: flex; flex-direction: column; align-items: center; position: relative; }
+  .int-step:not(:last-child)::after { content: '→'; position: absolute; right: -8px; top: 22px; font-size: 16px; color: var(--brun); opacity: 0.3; }
+  .int-bubble { width: 44px; height: 44px; border-radius: 50%; background: rgba(122,26,26,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 800; color: var(--bordeaux); margin-bottom: 8px; }
+  .int-label { font-size: 11px; font-weight: 600; color: var(--brun); text-align: center; line-height: 1.4; }
+
+  /* ROLE BOX */
+  .role-box { background: var(--creme); border-left: 4px solid var(--bordeaux); border-radius: 0 12px 12px 0; padding: 24px 28px; margin: 32px 0; }
+  .role-box-title { font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 700; color: var(--bordeaux); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px; }
+  .role-box ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .role-box li { font-size: 14px; line-height: 1.6; color: var(--brun); display: flex; gap: 10px; }
+  .role-box li::before { content: '→'; color: var(--bordeaux); font-weight: 700; flex-shrink: 0; }
+
+  /* LEARNED */
+  .learned-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .learned-card { background: var(--creme); border-radius: 12px; padding: 20px; }
+  .learned-num { font-size: 11px; font-weight: 800; color: var(--bordeaux); opacity: 0.4; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .learned-text { font-size: 14px; line-height: 1.65; color: var(--brun); }
+
+  /* PROJECT NAV */
+  .project-nav { background: var(--creme); padding: 48px; display: flex; justify-content: space-between; align-items: center; }
+  .proj-nav-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
+  .proj-nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brun); opacity: 0.4; }
+  .proj-nav-name { font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 700; color: var(--bordeaux); transition: letter-spacing 0.3s ease; }
+  .proj-nav-link:hover .proj-nav-name { letter-spacing: 0.5px; }
+
+  footer { background: var(--blanc); padding: 32px 48px 0; }
+  .footer-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 28px; border-bottom: 1px solid rgba(92,61,30,0.12); font-size: 14px; color: var(--brun); font-weight: 500; }
+  .footer-nav { display: flex; gap: 8px; align-items: center; }
+  .footer-nav a { color: var(--brun); text-decoration: none; font-weight: 600; }
+  .footer-nav a:hover { color: var(--bordeaux); }
+  .footer-dot { opacity: 0.4; }
+  .footer-blobs { display: flex; align-items: flex-end; height: 120px; overflow: hidden; }
+  .blob { height: 105px; flex-shrink: 0; }
+  .blob-yellow { width: 34%; background: var(--jaune); border-radius: 70px 70px 0 0; }
+  .blob-blue { width: 34%; background: var(--bleu); border-radius: 0; }
+  .blob-red { width: 32%; background: #C8431A; border-radius: 50% 50% 0 0; }
+
+  @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follower" id="follower"></div>
+<a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+
+<nav>
+  <a href="index.html" class="nav-btn nav-home">Home</a>
+  <a href="projects.html" class="nav-btn nav-project">Project</a>
+  <a href="about.html" class="nav-btn nav-about">About</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-circuit"></div>
+  <p class="hero-label">Project 05 - CS-173 · EPFL · 2025</p>
+  <h1 class="hero-title">
+    <div>RISC-V Processor</div>
+    <div class="dim">Multicycle</div>
+  </h1>
+  <div class="hero-meta-bar">
+    <div><div class="hero-meta-label">My role</div><div class="hero-meta-value">Full implementation</div></div>
+    <div><div class="hero-meta-label">Format</div><div class="hero-meta-value">5 incremental labs</div></div>
+    <div><div class="hero-meta-label">Stack</div><div class="hero-tags"><span class="hero-tag">Verilog</span><span class="hero-tag">RISC-V</span><span class="hero-tag">MMIO</span><span class="hero-tag">FPGA</span></div></div>
+  </div>
+</section>
+
+<div class="content">
+
+  <!-- INTRO -->
+  <div class="content-block">
+    <p class="s-label">The project</p>
+    <h2 class="s-title">Building a CPU from first principles, gate by gate</h2>
+    <div class="s-body">
+      <p>Over five incremental labs, I designed and implemented a complete RISC-V multicycle processor in Verilog, from the very first arithmetic unit all the way to a fully functional CPU with memory-mapped peripherals and hardware interrupt handling.</p>
+      <p>This wasn't a simulation exercise. Each lab built on the previous one, and the final result was a real processor running on FPGA, capable of executing RISC-V assembly programs, reacting to button presses via interrupts, and controlling LEDs and 7-segment displays through memory-mapped I/O.</p>
+      <p>Understanding how a CPU actually works, not just using one, is one of the most foundational experiences in computer science. This project delivered exactly that.</p>
+    </div>
+  </div>
+
+  <!-- GLOBAL ARCHITECTURE DIAGRAM -->
+  <div class="diagram-wrap dark">
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+      <defs>
+        <marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="rgba(232,184,75,0.4)"/>
+        </marker>
+      </defs>
+
+      <!-- ALU -->
+      <rect x="0" y="70" width="90" height="60" rx="8" fill="#E8B84B" opacity="0.12"/>
+      <text x="45" y="97" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#E8B84B">ALU</text>
+      <text x="45" y="113" text-anchor="middle" font-family="monospace" font-size="9" fill="#E8B84B" opacity="0.5">+−&|^slt</text>
+
+      <!-- Register File -->
+      <rect x="110" y="60" width="100" height="80" rx="8" fill="#2f5da1" opacity="0.15"/>
+      <text x="160" y="97" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#7A9FD4">Reg File</text>
+      <text x="160" y="113" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A9FD4" opacity="0.6">x0–x31</text>
+
+      <!-- Control FSM -->
+      <rect x="230" y="50" width="110" height="100" rx="8" fill="rgba(45,90,27,0.15)"/>
+      <text x="285" y="95" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#7ec87a">Control</text>
+      <text x="285" y="111" text-anchor="middle" font-family="monospace" font-size="9" fill="#7ec87a" opacity="0.6">FSM</text>
+      <text x="285" y="127" text-anchor="middle" font-family="monospace" font-size="8" fill="#7ec87a" opacity="0.4">FETCH→EXEC</text>
+
+      <!-- Memory / MMIO -->
+      <rect x="360" y="40" width="110" height="120" rx="8" fill="rgba(139,69,19,0.15)"/>
+      <text x="415" y="85" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#d4956a">Memory</text>
+      <text x="415" y="101" text-anchor="middle" font-family="monospace" font-size="9" fill="#d4956a" opacity="0.6">RAM + MMIO</text>
+      <text x="415" y="117" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4956a" opacity="0.4">LEDs / Buttons</text>
+      <text x="415" y="133" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4956a" opacity="0.4">7-seg display</text>
+
+      <!-- CSR -->
+      <rect x="490" y="60" width="90" height="80" rx="8" fill="rgba(122,26,26,0.15)"/>
+      <text x="535" y="97" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#e07070">CSR</text>
+      <text x="535" y="113" text-anchor="middle" font-family="monospace" font-size="9" fill="#e07070" opacity="0.6">mtvec mepc</text>
+
+      <!-- Interrupts -->
+      <rect x="600" y="70" width="110" height="60" rx="8" fill="rgba(122,26,26,0.2)"/>
+      <text x="655" y="97" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#ff8080">Interrupts</text>
+      <text x="655" y="113" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff8080" opacity="0.6">IRQ handler</text>
+
+      <!-- arrows -->
+      <line x1="90" y1="100" x2="108" y2="100" stroke="#E8B84B" stroke-width="1.2" opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="210" y1="100" x2="228" y2="100" stroke="#E8B84B" stroke-width="1.2" opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="340" y1="100" x2="358" y2="100" stroke="#E8B84B" stroke-width="1.2" opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="470" y1="100" x2="488" y2="100" stroke="#E8B84B" stroke-width="1.2" opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="580" y1="100" x2="598" y2="100" stroke="#E8B84B" stroke-width="1.2" opacity="0.3" marker-end="url(#arr2)"/>
+
+      <!-- labels -->
+      <text x="0" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 1</text>
+      <text x="110" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 2</text>
+      <text x="230" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 2</text>
+      <text x="360" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 3</text>
+      <text x="490" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 4</text>
+      <text x="600" y="16" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.2)">Lab 5</text>
+
+      <!-- bottom note -->
+      <text x="0" y="185" font-family="monospace" font-size="9" fill="rgba(255,255,255,0.15)">Each block built from scratch in Verilog and tested independently before integration</text>
+    </svg>
+    <p class="diagram-caption">Full processor architecture : 5 labs, built incrementally</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- THE LABS -->
+  <div class="content-block">
+    <p class="s-label">Five labs</p>
+    <h2 class="s-title">From arithmetic unit to full interrupt system</h2>
+
+    <div class="labs">
+      <div class="lab-row lab-1">
+        <div class="lab-left"><div class="lab-circle">L1</div><div class="lab-line"></div></div>
+        <div class="lab-content">
+          <div class="lab-title">ALU : the arithmetic core</div>
+          <div class="lab-desc">Designed the ALU with four sub-units: Add/Sub (using two's complement, A−B becomes A+(~B)+1), a comparator for signed and unsigned comparisons (LT vs LTU : same bits, different meaning), a logical unit for AND/OR/XOR, and a shift unit for SLL/SRL/SRA. A final multiplexer selects the right result based on the 6-bit op code. Without this, the processor can't do anything.</div>
+        </div>
+      </div>
+
+      <div class="lab-row lab-2">
+        <div class="lab-left"><div class="lab-circle">L2</div><div class="lab-line"></div></div>
+        <div class="lab-content">
+          <div class="lab-title">Multicycle processor : FSM + datapath</div>
+          <div class="lab-desc">Built the full processor datapath around a finite state machine controller. The key insight of multicycle design: instead of doing FETCH + DECODE + EXECUTE + MEMORY + WRITEBACK in one (very slow) cycle, each stage gets its own cycle. The clock can run faster, and complex instructions simply use more cycles. Implemented all RV32I instruction types: R-type, I-type (with sign extension), LOAD/STORE, branches, JAL, JALR.</div>
+        </div>
+      </div>
+
+      <div class="lab-row lab-3">
+        <div class="lab-left"><div class="lab-circle">L3</div><div class="lab-line"></div></div>
+        <div class="lab-content">
+          <div class="lab-title">External memory & MMIO peripherals</div>
+          <div class="lab-desc">Connected the CPU to external synchronous RAM (data arrives one cycle after the address, the multicycle design handles this naturally) and implemented Memory-Mapped I/O. Peripherals(LEDs, 7-segment display, buttons) are mapped to specific address ranges. The same lw/sw instructions that access RAM are used to control hardware. A decoder examines the address and activates the right peripheral.</div>
+        </div>
+      </div>
+
+      <div class="lab-row lab-4">
+        <div class="lab-left"><div class="lab-circle">L4</div><div class="lab-line"></div></div>
+        <div class="lab-content">
+          <div class="lab-title">CSR controller: special registers</div>
+          <div class="lab-desc">Implemented the Control and Status Registers: mtvec (interrupt handler address), mepc (return address saved before jumping to handler), mcause (what triggered the interrupt), and ipending (pending interrupt flags). Added the CSR instruction set (csrrw, csrrs, csrrc and immediate variants). These registers are what allows the CPU to save its state and jump to an interrupt handler safely.</div>
+        </div>
+      </div>
+
+      <div class="lab-row lab-5">
+        <div class="lab-left"><div class="lab-circle">L5</div><div class="lab-line"></div></div>
+        <div class="lab-content">
+          <div class="lab-title">Interrupts: full integration</div>
+          <div class="lab-desc">Connected everything: button presses generate an IRQ signal, the controller detects rising/falling edges (by comparing current and previous state), the CPU saves PC to mepc, jumps to mtvec, executes the handler, reads the SRC register to identify the source, clears it, and returns via mret. The processor can now multitask, running a main loop and reacting to hardware events without polling.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MULTICYCLE STATES -->
+  <div class="content-block">
+    <p class="s-label">How the FSM works</p>
+    <h2 class="s-title">The multicycle state machine</h2>
+    <div class="s-body">
+      <p>The controller is a finite state machine. At each clock cycle it moves to a new state and activates the right control signals. A LOAD instruction takes more cycles than an ADD because it needs to access memory, and that's exactly the point of multicycle design.</p>
+    </div>
+
+    <div class="states-grid">
+      <div class="state-card">
+        <div class="state-cycle">Cycle 1</div>
+        <div class="state-name">FETCH1</div>
+        <div class="state-desc">Put PC on the address bus. RAM is synchronous, the data will arrive next cycle.</div>
+      </div>
+      <div class="state-card">
+        <div class="state-cycle">Cycle 2</div>
+        <div class="state-name">FETCH2</div>
+        <div class="state-desc">Store the instruction in IR. Increment PC ← PC + 4.</div>
+      </div>
+      <div class="state-card">
+        <div class="state-cycle">Cycle 3</div>
+        <div class="state-name">DECODE</div>
+        <div class="state-desc">Read opcode, funct3, funct7. Determine instruction type and next state.</div>
+      </div>
+      <div class="state-card">
+        <div class="state-cycle">Cycle 4</div>
+        <div class="state-name">EXECUTE</div>
+        <div class="state-desc">ALU computes result. For branches: evaluate condition. For R/I-type: compute value.</div>
+      </div>
+      <div class="state-card">
+        <div class="state-cycle">Cycle 5 (LOAD)</div>
+        <div class="state-name">LOAD1</div>
+        <div class="state-desc">Compute memory address (rs1 + imm), send to RAM.</div>
+      </div>
+      <div class="state-card">
+        <div class="state-cycle">Cycle 6 (LOAD)</div>
+        <div class="state-name">LOAD2</div>
+        <div class="state-desc">Data arrives from RAM. Write to destination register rd.</div>
+      </div>
+    </div>
+
+    <!-- FSM flow diagram -->
+    <div class="diagram-wrap" style="margin-top:28px;">
+      <svg viewBox="0 0 720 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <defs>
+          <marker id="arr3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="rgba(92,61,30,0.35)"/>
+          </marker>
+        </defs>
+        <!-- states -->
+        <rect x="0" y="20" width="88" height="36" rx="18" fill="#E8B84B" opacity="0.18"/>
+        <text x="44" y="42" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#9A6F00">FETCH1</text>
+
+        <rect x="108" y="20" width="88" height="36" rx="18" fill="#E8B84B" opacity="0.18"/>
+        <text x="152" y="42" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#9A6F00">FETCH2</text>
+
+        <rect x="216" y="20" width="88" height="36" rx="18" fill="#2f5da1" opacity="0.15"/>
+        <text x="260" y="42" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#2f5da1">DECODE</text>
+
+        <rect x="324" y="20" width="88" height="36" rx="18" fill="#2d5a1b" opacity="0.12"/>
+        <text x="368" y="42" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#2d5a1b">EXEC</text>
+
+        <!-- branch for load -->
+        <rect x="432" y="4" width="80" height="28" rx="14" fill="#8B4513" opacity="0.12"/>
+        <text x="472" y="22" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#8B4513">LOAD1</text>
+        <rect x="432" y="48" width="80" height="28" rx="14" fill="#8B4513" opacity="0.12"/>
+        <text x="472" y="66" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#8B4513">LOAD2</text>
+
+        <rect x="530" y="20" width="88" height="36" rx="18" fill="#7A1A1A" opacity="0.1"/>
+        <text x="574" y="38" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#7A1A1A">WRITE</text>
+        <text x="574" y="50" text-anchor="middle" font-family="monospace" font-size="9" fill="#7A1A1A" opacity="0.6">BACK</text>
+
+        <!-- back to fetch -->
+        <path d="M620 38 Q670 38 670 8 Q670 -8 44 -8 Q20 -8 20 18" stroke="rgba(92,61,30,0.2)" stroke-width="1.5" fill="none" stroke-dasharray="4" marker-end="url(#arr3)"/>
+
+        <!-- arrows -->
+        <line x1="88" y1="38" x2="106" y2="38" stroke="rgba(92,61,30,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="196" y1="38" x2="214" y2="38" stroke="rgba(92,61,30,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="304" y1="38" x2="322" y2="38" stroke="rgba(92,61,30,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="412" y1="30" x2="430" y2="18" stroke="rgba(139,69,19,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="412" y1="46" x2="430" y2="60" stroke="rgba(139,69,19,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="512" y1="18" x2="528" y2="28" stroke="rgba(92,61,30,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <line x1="512" y1="62" x2="528" y2="48" stroke="rgba(92,61,30,0.3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+      </svg>
+      <p class="diagram-caption">Multicycle FSM : LOAD takes 6 cycles, ADD takes 4</p>
+    </div>
+  </div>
+
+  <!-- MMIO -->
+  <div class="content-block">
+    <p class="s-label">Memory-Mapped I/O</p>
+    <h2 class="s-title">Peripherals as memory addresses</h2>
+    <div class="s-body">
+      <p>The elegant insight of MMIO: instead of special I/O instructions, every peripheral gets an address in the memory space. The CPU uses the exact same <code style="background:var(--creme);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">lw</code> / <code style="background:var(--creme);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">sw</code> instructions to control LEDs or read button states as it does to access RAM. A decoder module examines the address and activates the right peripheral, all others stay inactive.</p>
+    </div>
+    <table class="mmio-table">
+      <thead><tr><th>Address</th><th>Peripheral</th><th>Operation</th></tr></thead>
+      <tbody>
+        <tr><td>0x50000000</td><td>LEDs</td><td>sw writes bit pattern → controls which LEDs light up</td></tr>
+        <tr><td>0x60000000</td><td>7-segment display</td><td>sw writes encoded digit → displayed on screen</td></tr>
+        <tr><td>0x70000000</td><td>Buttons / Switches</td><td>lw reads current button state (10 buttons + 8 switches)</td></tr>
+        <tr><td>0x80000000</td><td>RAM</td><td>Standard synchronous memory : program + data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- INTERRUPT SEQUENCE -->
+  <div class="content-block">
+    <p class="s-label">Interrupt handling</p>
+    <h2 class="s-title">The full interrupt sequence : 8 steps</h2>
+    <div class="s-body">
+      <p>Without interrupts, the CPU would waste cycles constantly polling buttons in a loop. With interrupts, it runs its main program and only reacts when hardware signals it. Here's what happens from button press to program resume:</p>
+    </div>
+
+    <div class="int-steps">
+      <div class="int-step"><div class="int-bubble">1</div><div class="int-label">Button pressed → generates IRQ</div></div>
+      <div class="int-step"><div class="int-bubble">2</div><div class="int-label">Controller detects rising edge</div></div>
+      <div class="int-step"><div class="int-bubble">3</div><div class="int-label">mepc ← current PC saved</div></div>
+      <div class="int-step"><div class="int-bubble">4</div><div class="int-label">PC ← mtvec (handler addr)</div></div>
+      <div class="int-step"><div class="int-bubble">5</div><div class="int-label">Handler starts executing</div></div>
+      <div class="int-step"><div class="int-bubble">6</div><div class="int-label">Read SRC, handle event, clear SRC</div></div>
+      <div class="int-step"><div class="int-bubble">7</div><div class="int-label">mret executed</div></div>
+      <div class="int-step"><div class="int-bubble">8</div><div class="int-label">PC ← mepc, program resumes</div></div>
+    </div>
+
+    <div class="s-body" style="margin-top:24px;">
+      <p>Edge detection is worth highlighting: to detect a button press (0→1 transition), the controller stores the previous state and compares it to the current one. If old=0 and new=1, it's a rising edge, fire the interrupt. This is how the SRC register gets set, and why clearing it at the end of the handler is critical to avoid re-triggering.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TAKEAWAYS -->
+  <div class="content-block">
+    <p class="s-label">Takeaways</p>
+    <h2 class="s-title">What building a CPU from scratch teaches you</h2>
+    <div class="learned-grid">
+      <div class="learned-card">
+        <div class="learned-num">01</div>
+        <div class="learned-text">Everything is abstraction on abstraction. An instruction like "add x1, x2, x3" hides a fetch cycle, a decode cycle, an ALU operation, and a register write, each a separate hardware event. Building it removes the magic.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">02</div>
+        <div class="learned-text">Timing is everything in hardware. Unlike software where a function call just works, in Verilog you think in clock cycles. A synchronous RAM means you ask for data in cycle N and get it in cycle N+1, that's a design decision, not a bug.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">03</div>
+        <div class="learned-text">MMIO is elegant. The same instruction set that operates on integers in registers also controls physical LEDs, just by targeting a different address. This unification is why RISC architectures are clean to implement.</div>
+      </div>
+      <div class="learned-card">
+        <div class="learned-num">04</div>
+        <div class="learned-text">Interrupts are the foundation of reactive systems. Every OS, every embedded device, every real-time system relies on this mechanism. Implementing it in hardware, saving state, jumping, restoring, makes it concrete forever.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="project-nav">
+  <a href="gpu.html" class="proj-nav-link">
+    <span class="proj-nav-label">← Previous</span>
+    <span class="proj-nav-name">GPU Optimization</span>
+  </a>
+  <a href="projects.html" class="proj-nav-link" style="text-align:right;">
+    <span class="proj-nav-label">All projects</span>
+    <span class="proj-nav-name">Portfolio →</span>
+  </a>
+</div>
+
+<footer>
+  <div class="footer-top">
+    <span>© 2026</span>
+    <div class="footer-nav">
+      <a href="index.html">Home</a><span class="footer-dot">·</span>
+      <a href="projects.html">Project</a><span class="footer-dot">·</span>
+      <a href="about.html">About</a>
+    </div>
+    <span>Amandine Dejardin</span>
+  </div>
+  <div class="footer-blobs">
+    <div class="blob blob-yellow"></div>
+    <div class="blob blob-blue"></div>
+    <div class="blob blob-red"></div>
+  </div>
+</footer>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  const follower = document.getElementById('follower');
+  let mx=0,my=0,fx=0,fy=0;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+  function animateCursor() {
+    cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+    fx+=(mx-fx)*0.12; fy+=(my-fy)*0.12;
+    follower.style.left=fx+'px'; follower.style.top=fy+'px';
+    requestAnimationFrame(animateCursor);
+  }
+  animateCursor();
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2)'; cursor.style.background='#E8B84B'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; cursor.style.background='#7A1A1A'; });
+  });
+  const blocks = document.querySelectorAll('.content-block, .diagram-wrap');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  blocks.forEach(b => obs.observe(b));
+</script>
+</body>
+</html>
