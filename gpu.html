@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GPU Matrix Multiplication — Amandine Dejardin</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600&f[]=gambetta@400,500&f[]=zodiak@400&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bordeaux: #7A1A1A;
@@ -31,7 +32,7 @@
     }
 
     body {
-      font-family: 'Satoshi', sans-serif;
+      font-family: 'zodiak', sans-serif;
       background: var(--blanc);
       color: var(--noir);
       overflow-x: hidden;
@@ -197,6 +198,11 @@
       animation: slideUp 0.9s 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       position: relative;
       z-index: 2;
+    }
+
+    .hero-title,
+    .hero-title div {
+      font-family: 'Clash Display', sans-serif !important;
     }
 
     .hero-title .dim {
@@ -874,7 +880,8 @@
           and B, combining four products into one result.</p>
         <p>This makes every output element fully independent of every other, a property that makes RMM
           <strong>embarrassingly parallelizable</strong> and a perfect playground to explore different parallelism
-          models.</p>
+          models.
+        </p>
       </div>
 
       <!-- RMM formula diagram -->
@@ -1272,7 +1279,7 @@
       <span class="proj-nav-label">← Previous</span>
       <span class="proj-nav-name">Amy Compiler</span>
     </a>
-    <a href="projects.html" class="proj-nav-link" style="text-align:right;">
+    <a href="riscv.html" class="proj-nav-link" style="text-align:right;">
       <span class="proj-nav-label">Next →</span>
       <span class="proj-nav-name">RISC V Multicycle processor</span>
     </a>

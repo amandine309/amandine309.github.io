@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D Plotter - Amandine Dejardin</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600&f[]=gambetta@400,500&f[]=zodiak@400&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bordeaux: #7A1A1A;
+      --jaune: #E8B84B;
+      --bleu: #2f5da1;
+      --creme: #F5F0E8;
+      --brun: #5C3D1E;
+      --blanc: #ffffff;
+      --noir: #1A1008;
+      --orange: #C8431A;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'zodiak', sans-serif;
+      background: var(--blanc);
+      color: var(--noir);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    .cursor {
+      width: 12px;
+      height: 12px;
+      background: var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease, background 0.2s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .cursor-follower {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.35s ease;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    nav {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeDown 0.6s 0.3s forwards;
+    }
+
+    .nav-btn {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: none;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px) scale(1.04);
+      filter: brightness(0.95);
+    }
+
+    .nav-home {
+      width: 110px;
+      height: 90px;
+      background: #f7ce53;
+      mask-image: url("shapes/home-shape.svg");
+      -webkit-mask-image: url("shapes/home-shape.svg");
+      color: var(--bleu);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+    }
+
+    .nav-project {
+      width: 95px;
+      height: 90px;
+      background: var(--bleu);
+      color: var(--blanc);
+      border-radius: 8px;
+    }
+
+    .nav-about {
+      width: 95px;
+      height: 90px;
+      background: var(--bordeaux);
+      color: var(--creme);
+      border-radius: 50%;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 36px;
+      left: 36px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--creme);
+      text-decoration: none;
+      opacity: 0;
+      animation: fadeDown 0.5s 0.5s forwards;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--jaune);
+    }
+
+    .back-arrow {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .back-link:hover .back-arrow {
+      transform: translateX(-5px);
+    }
+
+    .hero {
+      min-height: 65vh;
+      background: #7a3a08;
+      padding: 140px 56px 64px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.06;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.35);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.5s forwards;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(52px, 8.5vw, 120px);
+      font-weight: 800;
+      color: var(--blanc);
+      line-height: 0.88;
+      letter-spacing: -4px;
+      opacity: 0;
+      animation: slideUp 0.9s 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title .accent {
+      color: var(--jaune);
+    }
+
+    .hero-title .dim {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-title,
+    .hero-title div {
+      font-family: 'Clash Display', sans-serif !important;
+    }
+
+    .hero-meta-bar {
+      display: flex;
+      gap: 40px;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      animation: slideUp 0.6s 0.9s forwards;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+      margin-bottom: 5px;
+    }
+
+    .hero-meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    /* CONTENT */
+    .content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    .s-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bordeaux);
+      opacity: 0.6;
+      margin-bottom: 10px;
+    }
+
+    .s-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 700;
+      color: var(--bordeaux);
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .s-body {
+      font-size: 15px;
+      line-height: 1.78;
+      color: rgba(26, 16, 8, 0.68);
+    }
+
+    .s-body p+p {
+      margin-top: 14px;
+    }
+
+    .content-block {
+      margin-bottom: 72px;
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(92, 61, 30, 0.1);
+      margin: 56px 0;
+    }
+
+    /* DIAGRAM */
+    .diagram-wrap {
+      background: var(--creme);
+      border-radius: 16px;
+      padding: 36px 32px;
+      margin: 32px 0;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .diagram-wrap.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .diagram-wrap.dark {
+      background: #110a02;
+    }
+
+    .diagram-caption {
+      font-size: 12px;
+      color: var(--brun);
+      opacity: 0.5;
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .diagram-wrap.dark .diagram-caption {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* WHAT WAS BUILT — component cards */
+    .components-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .component-card {
+      background: var(--blanc);
+      border: 1.5px solid rgba(92, 61, 30, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .component-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .component-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brun);
+      margin-bottom: 6px;
+    }
+
+    .component-desc {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(26, 16, 8, 0.55);
+    }
+
+    /* PHASES */
+    .phases {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 28px;
+    }
+
+    .phase-row {
+      display: flex;
+      gap: 0;
+    }
+
+    .phase-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    .phase-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .phase-line {
+      width: 2px;
+      flex: 1;
+      min-height: 20px;
+    }
+
+    .phase-row:last-child .phase-line {
+      display: none;
+    }
+
+    .phase-content {
+      padding: 0 0 36px 20px;
+      flex: 1;
+    }
+
+    .phase-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .phase-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.62);
+    }
+
+    .ph-1 .phase-circle {
+      background: rgba(47, 93, 161, 0.12);
+      color: var(--bleu);
+    }
+
+    .ph-1 .phase-line {
+      background: rgba(47, 93, 161, 0.15);
+    }
+
+    .ph-1 .phase-title {
+      color: var(--bleu);
+    }
+
+    .ph-2 .phase-circle {
+      background: rgba(92, 61, 30, 0.1);
+      color: var(--brun);
+    }
+
+    .ph-2 .phase-line {
+      background: rgba(92, 61, 30, 0.12);
+    }
+
+    .ph-2 .phase-title {
+      color: var(--brun);
+    }
+
+    .ph-3 .phase-circle {
+      background: rgba(200, 67, 26, 0.1);
+      color: var(--orange);
+    }
+
+    .ph-3 .phase-line {
+      background: rgba(200, 67, 26, 0.1);
+    }
+
+    .ph-3 .phase-title {
+      color: var(--orange);
+    }
+
+    .ph-4 .phase-circle {
+      background: rgba(232, 184, 75, 0.15);
+      color: #9A6F00;
+    }
+
+    .ph-4 .phase-line {
+      background: rgba(232, 184, 75, 0.2);
+    }
+
+    .ph-4 .phase-title {
+      color: #9A6F00;
+    }
+
+    .ph-5 .phase-circle {
+      background: rgba(122, 26, 26, 0.1);
+      color: var(--bordeaux);
+    }
+
+    .ph-5 .phase-title {
+      color: var(--bordeaux);
+    }
+
+    .challenge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .challenge-item {
+      display: flex;
+      gap: 20px;
+      padding: 22px;
+      background: var(--blanc);
+      border: 1.5px solid rgba(92, 61, 30, 0.08);
+      border-radius: 12px;
+    }
+
+    .challenge-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+      width: 40px;
+      text-align: center;
+      color: #5C3D1E;
+    }
+
+    .challenge-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      margin-bottom: 6px;
+    }
+
+    .challenge-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.62);
+    }
+
+    .role-box {
+      background: var(--creme);
+      border-left: 4px solid var(--bordeaux);
+      border-radius: 0 12px 12px 0;
+      padding: 24px 28px;
+      margin: 32px 0;
+    }
+
+    .role-box-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .role-box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .role-box li {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--brun);
+      display: flex;
+      gap: 10px;
+    }
+
+    .role-box li::before {
+      content: '→';
+      color: var(--bordeaux);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .learned-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .learned-card {
+      background: var(--creme);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .learned-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--bordeaux);
+      opacity: 0.4;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .learned-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--brun);
+    }
+
+    .img-placeholder {
+      width: 100%;
+      border-radius: 12px;
+      background: var(--creme);
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--brun);
+      opacity: 0.4;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin: 24px 0;
+    }
+
+    .img-real {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+
+    .img-real img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .project-nav {
+      background: var(--creme);
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .proj-nav-link {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .proj-nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brun);
+      opacity: 0.4;
+    }
+
+    .proj-nav-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      transition: letter-spacing 0.3s ease;
+    }
+
+    .proj-nav-link:hover .proj-nav-name {
+      letter-spacing: 0.5px;
+    }
+
+    footer {
+      background: var(--blanc);
+      padding: 32px 48px 0;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.12);
+      font-size: 14px;
+      color: var(--brun);
+      font-weight: 500;
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .footer-nav a {
+      color: var(--brun);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-nav a:hover {
+      color: var(--bordeaux);
+    }
+
+    .footer-dot {
+      opacity: 0.4;
+    }
+
+    .footer-blobs {
+      display: flex;
+      align-items: flex-end;
+      height: 120px;
+      overflow: hidden;
+    }
+
+    .blob {
+      height: 105px;
+      flex-shrink: 0;
+    }
+
+    .blob-yellow {
+      width: 34%;
+      background: var(--jaune);
+      border-radius: 70px 70px 0 0;
+    }
+
+    .blob-blue {
+      width: 34%;
+      background: var(--bleu);
+      border-radius: 0;
+    }
+
+    .blob-red {
+      width: 32%;
+      background: #C8431A;
+      border-radius: 50% 50% 0 0;
+    }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="follower"></div>
+  <a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+
+  <nav>
+    <a href="index.html" class="nav-btn nav-home">Home</a>
+    <a href="projects.html" class="nav-btn nav-project">Project</a>
+    <a href="about.html" class="nav-btn nav-about">About</a>
+  </nav>
+
+  <!-- HERO with animated pen trace SVG -->
+  <section class="hero">
+    <!-- Animated drawing lines in background -->
+    <svg class="hero-lines" viewBox="0 0 1440 600" xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid slice">
+      <path d="M100 100 L400 100 L400 400 L100 400 Z" stroke="#E8B84B" stroke-width="1" fill="none">
+        <animate attributeName="stroke-dashoffset" from="1200" to="0" dur="4s" repeatCount="indefinite" />
+        <animate attributeName="stroke-dasharray" from="0 1200" to="1200 0" dur="4s" repeatCount="indefinite" />
+      </path>
+      <path d="M500 150 C600 50 800 250 900 150 S1100 50 1200 150" stroke="#E8B84B" stroke-width="1" fill="none">
+        <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="5s" begin="1s" repeatCount="indefinite" />
+        <animate attributeName="stroke-dasharray" from="0 1000" to="1000 0" dur="5s" begin="1s"
+          repeatCount="indefinite" />
+      </path>
+      <circle cx="720" cy="350" r="100" stroke="#E8B84B" stroke-width="1" fill="none">
+        <animate attributeName="stroke-dashoffset" from="628" to="0" dur="3s" begin="2s" repeatCount="indefinite" />
+        <animate attributeName="stroke-dasharray" from="0 628" to="628 0" dur="3s" begin="2s"
+          repeatCount="indefinite" />
+      </circle>
+    </svg>
+
+    <p class="hero-label">Project - CS-358 · EPFL · 2025 · Solo</p>
+    <h1 class="hero-title">
+      <div>2D <span class="accent">Plotter</span></div>
+      <div class="dim">from scratch</div>
+    </h1>
+    <div class="hero-meta-bar">
+      <div>
+        <div class="hero-meta-label">Type</div>
+        <div class="hero-meta-value">Solo : hardware + software</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Output</div>
+        <div class="hero-meta-value">Physical drawings on paper</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Stack</div>
+        <div class="hero-tags"><span class="hero-tag">Arduino</span><span class="hero-tag">C++</span><span
+            class="hero-tag">Fusion 360</span><span class="hero-tag">3D Print</span><span class="hero-tag">Stepper
+            motors</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="content">
+
+    <div class="content-block">
+      <p class="s-label">The project</p>
+      <h2 class="s-title">Building a machine that draws, hardware, firmware, and everything in between</h2>
+      <div class="s-body">
+        <p>This was a full individual project from MIT's course, build a functional 2D plotter from a
+          component bag containing an Arduino Uno, stepper motors, a servo, belts, and assorted hardware. Everything
+          else, the wiring, the firmware, the pen holder, had to be designed and
+          built from scratch.</p>
+        <p>The plotter moves a pen across a sheet of paper in two axes using stepper motors and timing belts, lifts the
+          pen between strokes using a servo, and interprets G-code-like commands to produce actual drawings. At the end:
+          a physical machine that draws.</p>
+      </div>
+
+      <div class="role-box">
+        <div class="role-box-title">Everything I built</div>
+        <ul>
+          <li>Designed and printed the pen holder in Fusion 360, with servo-actuated lift mechanism</li>
+          <li>Assembled the full mechanical structure : rails, belts, motor mounts</li>
+          <li>Wired the electronics : Arduino, two stepper drivers, servo, power supply</li>
+          <li>Wrote the full Arduino firmware : stepper control, G-code parsing, pen lift sequencing</li>
+          <li>Calibrated, debugged, and tuned until the drawings came out clean</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="img-real reveal-block">
+      <img src="images/plotter.png" alt="2D Plotter">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">Build process</p>
+      <h2 class="s-title">Five phases, one machine</h2>
+
+      <div class="phases">
+        <div class="phase-row ph-1">
+          <div class="phase-left">
+            <div class="phase-circle">01</div>
+            <div class="phase-line"></div>
+          </div>
+          <div class="phase-content">
+            <div class="phase-title">3D design in Fusion 360</div>
+            <div class="phase-desc">The course provided a base design but the pen holder with servo lift had to be
+              designed from scratch, attached to the existing PenHolderSlider without replacing it. The constraint: the
+              pen distance to the slider must stay exactly the same as the non-lifting design.</div>
+          </div>
+        </div>
+        <div class="phase-row ph-2">
+          <div class="phase-left">
+            <div class="phase-circle">02</div>
+            <div class="phase-line"></div>
+          </div>
+          <div class="phase-content">
+            <div class="phase-title">3D printing & post-processing</div>
+            <div class="phase-desc">Printed all parts in PETG. The critical step was post-processing, parts need to
+              slide
+              smoothly on the rails with minimal friction but no wobble. Too tight and the motors stall. Too loose and
+              the drawings are imprecise. Used sandpaper to tune the axle holes until the carriage moved freely but
+              without play.</div>
+          </div>
+        </div>
+        <div class="phase-row ph-3">
+          <div class="phase-left">
+            <div class="phase-circle">03</div>
+            <div class="phase-line"></div>
+          </div>
+          <div class="phase-content">
+            <div class="phase-title">Mechanical assembly</div>
+            <div class="phase-desc">Assembled the full frame, mounted the stepper motors, and tensioned the timing
+              belts. Belt tension is a delicate balance, too loose and the carriage skips, too tight and the motors
+              can't drive it. The spec: about 5mm of play when pressing the belt with a finger. Every M3 screw had to be
+              the right length.</div>
+          </div>
+        </div>
+        <div class="phase-row ph-4">
+          <div class="phase-left">
+            <div class="phase-circle">04</div>
+            <div class="phase-line"></div>
+          </div>
+          <div class="phase-content">
+            <div class="phase-title">Electronics & wiring</div>
+            <div class="phase-desc">Wired the Arduino Uno to two stepper motor drivers (one per axis), the servo for pen
+              lift, and the power supply. Stepper drivers need careful current calibration, too much current heats the
+              motors and wastes power, too little causes missed steps. The wiring had to be clean enough not to snag the
+              moving carriage.</div>
+          </div>
+        </div>
+        <div class="phase-row ph-5">
+          <div class="phase-left">
+            <div class="phase-circle">05</div>
+            <div class="phase-line"></div>
+          </div>
+          <div class="phase-content">
+            <div class="phase-title">Firmware & calibration</div>
+            <div class="phase-desc">Wrote the Arduino firmware from scratch: G-code parser (M commands for pen lift,
+              G0/G1 for moves), stepper step sequencing with acceleration, coordinate system management, and servo
+              control for pen up/down. Calibrated steps-per-mm for both axes by measuring actual vs commanded distances,
+              then iterated until drawing output matched input geometry.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">What was hard</p>
+      <h2 class="s-title">Three problems that took the most time</h2>
+      <div class="challenge-list">
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅰ</div>
+          <div>
+            <div class="challenge-title">The pen holder servo lift</div>
+            <div class="challenge-desc">Designing a pen holder that lifts cleanly is harder than it sounds. The servo
+              needs enough torque to lift against the pen's weight, the lift distance needs to be consistent (too little
+              and the pen drags between strokes, too much and re-engagement position varies), and the whole assembly
+              can't add too much weight or inertia to the carriage. Multiple design iterations in Fusion 360 before
+              getting a version that worked reliably.</div>
+          </div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅱ</div>
+          <div>
+            <div class="challenge-title">Stepper motor calibration</div>
+            <div class="challenge-desc">Stepper motors are open-loop, they don't know if they actually moved or missed a
+              step. Getting the steps-per-mm ratio right required iterative measurement: command a 100mm move, measure
+              actual distance, adjust, repeat. Any accumulated error means the drawing drifts from the intended
+              geometry. The X and Y axes also have different gear ratios so each had to be calibrated independently.
+            </div>
+          </div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅲ</div>
+          <div>
+            <div class="challenge-title">G-code parsing and trajectory planning</div>
+            <div class="challenge-desc">Writing a G-code interpreter on a microcontroller with limited memory requires
+              careful design. The parser reads commands character by character, extracts coordinates, determines move
+              type (rapid vs draw), and converts to step counts. Coordinating both axes simultaneously so the pen moves
+              in a straight diagonal, rather than a staircase, requires computing the step ratio and interleaving steps
+              from both motors correctly.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-block">
+      <p class="s-label">Components</p>
+      <h2 class="s-title">What goes into a plotter</h2>
+      <div class="components-grid">
+        <div class="component-card">
+          <div class="component-icon">♔</div>
+          <div class="component-title">Arduino Uno</div>
+          <div class="component-desc">Main controller : parses G-code, drives motors, controls servo</div>
+        </div>
+        <div class="component-card">
+          <div class="component-icon">✼</div>
+          <div class="component-title">2× Stepper motors</div>
+          <div class="component-desc">One per axis : precise positional control via step pulses</div>
+        </div>
+        <div class="component-card">
+          <div class="component-icon">↻</div>
+          <div class="component-title">Servo motor</div>
+          <div class="component-desc">Actuates pen lift : raises pen between strokes</div>
+        </div>
+        <div class="component-card">
+          <div class="component-icon">☑</div>
+          <div class="component-title">3D printed parts</div>
+          <div class="component-desc">Carriage, pen holder, mounts : designed in Fusion 360</div>
+        </div>
+        <div class="component-card">
+          <div class="component-icon">⇌</div>
+          <div class="component-title">Timing belts + rails</div>
+          <div class="component-desc">Transmit motor rotation to linear carriage motion</div>
+        </div>
+        <div class="component-card">
+          <div class="component-icon">⋒</div>
+          <div class="component-title">Stepper drivers</div>
+          <div class="component-desc">A4988 : convert step/direction signals to motor current</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">Takeaways</p>
+      <h2 class="s-title">What a solo hardware project teaches you</h2>
+      <div class="learned-grid">
+        <div class="learned-card">
+          <div class="learned-num">01</div>
+          <div class="learned-text">Physical tolerances are real. A 0.2mm error in a 3D-printed hole means the axle
+            binds. Unlike software where a bug produces a clear error, a mechanical problem produces mysterious motion
+            artifacts that could be friction, backlash, missed steps, or belt tension, debugging requires physical
+            intuition.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">02</div>
+          <div class="learned-text">Hardware and software are deeply coupled. The firmware step count depends on the
+            mechanical gear ratio, which depends on the 3D printed pulley diameter, which depends on the print quality.
+            A change anywhere in the chain requires re-calibrating everything downstream.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">03</div>
+          <div class="learned-text">Iteration is the process. First pen holder didn't lift cleanly, redesign. First belt
+            tension was too tight, loosen. First firmware had staircase diagonals, fix step interleaving. Each cycle
+            took hours. The final result worked precisely because of the iterations, not despite them.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">04</div>
+          <div class="learned-text">There is something uniquely satisfying about a machine that makes physical things.
+            Watching the plotter trace a clean circle on paper, a circle defined by coordinates in a text file,
+            translated by firmware, executed by motors, rendered in ink, bridges the digital and physical in a way that
+            pure software never does.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="project-nav">
+    <a href="gameoflife.html" class="proj-nav-link">
+      <span class="proj-nav-label">← Previous</span>
+      <span class="proj-nav-name">Game of Life</span>
+    </a>
+    <a href="projects.html" class="proj-nav-link" style="text-align:right;">
+      <span class="proj-nav-label">All projects</span>
+      <span class="proj-nav-name">Portfolio →</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="footer-top">
+      <span>© 2026</span>
+      <div class="footer-nav">
+        <a href="index.html">Home</a><span class="footer-dot">·</span>
+        <a href="projects.html">Project</a><span class="footer-dot">·</span>
+        <a href="about.html">About</a>
+      </div>
+      <span>Amandine Dejardin</span>
+    </div>
+    <div class="footer-blobs">
+      <div class="blob blob-yellow"></div>
+      <div class="blob blob-blue"></div>
+      <div class="blob blob-red"></div>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+      fx += (mx - fx) * 0.12; fy += (my - fy) * 0.12;
+      follower.style.left = fx + 'px'; follower.style.top = fy + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    document.querySelectorAll('a,button').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2)'; cursor.style.background = '#E8B84B'; });
+      el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; cursor.style.background = '#7A1A1A'; });
+    });
+    const blocks = document.querySelectorAll('.content-block, .diagram-wrap, .img-placeholder');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    blocks.forEach(b => obs.observe(b));
+  </script>
+</body>
+
+</html>

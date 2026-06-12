@@ -7,7 +7,8 @@
   <title>Projects — Amandine Dejardin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600&f[]=gambetta@400,500&f[]=zodiak@400&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bordeaux: #7A1A1A;
@@ -254,13 +255,14 @@
       line-height: 1.7;
       color: rgba(26, 16, 8, 0.65);
       max-width: 420px;
+      font-family: 'zodiak', sans-serif;
     }
 
     .btn-view {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-family: 'Clash Display', sans-serif;
+      font-family: 'zodiak', sans-serif;
       font-size: 14px;
       font-weight: 700;
       color: var(--bordeaux);
@@ -482,6 +484,7 @@
     }
 
     .coming-desc {
+      font-family: 'zodiak', sans-serif;
       font-size: 13px;
       line-height: 1.65;
       color: rgba(26, 16, 8, 0.55);
@@ -503,6 +506,7 @@
 
     .footer-top {
       display: flex;
+      font-family: 'zodiak', sans-serif;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 28px;
@@ -705,13 +709,12 @@
           <span class="tag tag-bleu">RISC V</span>
           <span class="tag tag-brun">MMIO</span>
         </div>
-        <p class="project-desc">Implemented a functional game of life in assembly on a gecko
+        <p class="project-desc">Conway's Game of Life, built from scratch in RISC-V assembly on an FPGA with LED display and button controls.
         </p>
         <a href="gameoflife.html" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
-        <img src="images/gameoflife.gif"
-          alt="Game of Life">
+        <img src="images/gameoflife.gif" alt="Game of Life">
         <div class="thumb-overlay"></div>
       </div>
     </div>
@@ -722,11 +725,12 @@
         <h2 class="project-name">Plotter pen</h2>
         <div class="project-tags">
           <span class="tag tag-bordeaux">Arduino</span>
-          <span class="tag tag-bleu">Technique Skills</span>
+          <span class="tag tag-bleu">Fusion 360</span>
         </div>
-        <p class="project-desc">Implemented a multicycle RISC-V processor in Verilog, including ALU,
-          control unit, memory-mapped peripherals and interrupt handling.</p>
-        <a href="riscv.html" class="btn-view">View more details <span class="btn-arrow">→</span></a>
+        <p class="project-desc">Developed a fully functional 2D drawing robot combining mechanical design, embedded
+          programming, and electronics integration.
+          The system interprets drawing commands to create accurate pen-based artwork on paper.</p>
+        <a href="plotter.html" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>
       <div class="project-thumb">
         <img src="images/plotter.png" alt="RISC-V Processor">
@@ -784,8 +788,8 @@
         <p class="coming-desc">Develope an automated web security scanner capable of detecting common vulnerabilities
           such as SQL injection, XSS, insecure headers, exposed endpoints, and configuration weaknesses.</p>
         <div class="coming-tags">
-          <span class="tag tag-bleu">Technologie</span>
-          <span class="tag tag-brun">Domaine</span>
+          <span class="tag tag-bleu">Web attack</span>
+          <span class="tag tag-brun">HTML</span>
         </div>
       </div>
 

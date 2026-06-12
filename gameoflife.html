@@ -1,556 +1,1256 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game of Life in Assembly - Amandine Dejardin</title>
-<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bordeaux: #7A1A1A;
-    --jaune: #E8B84B;
-    --bleu: #2f5da1;
-    --creme: #F5F0E8;
-    --brun: #5C3D1E;
-    --blanc: #ffffff;
-    --noir: #1A1008;
-    --vert: #1a4a1a;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game of Life in Assembly - Amandine Dejardin</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600&f[]=gambetta@400,500&f[]=zodiak@400&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bordeaux: #7A1A1A;
+      --jaune: #E8B84B;
+      --bleu: #2f5da1;
+      --creme: #F5F0E8;
+      --brun: #5C3D1E;
+      --blanc: #ffffff;
+      --noir: #1A1008;
+      --vert: #1a4a1a;
+    }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Satoshi', sans-serif; background: var(--blanc); color: var(--noir); overflow-x: hidden; cursor: none; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .cursor { width: 12px; height: 12px; background: var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; transition: transform 0.15s ease, background 0.2s ease; transform: translate(-50%, -50%); }
-  .cursor-follower { width: 36px; height: 36px; border: 1.5px solid var(--bordeaux); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9998; transition: transform 0.35s ease; transform: translate(-50%, -50%); opacity: 0.5; }
+    html {
+      scroll-behavior: smooth;
+    }
 
-  nav { position: fixed; top: 20px; right: 24px; display: flex; z-index: 100; opacity: 0; animation: fadeDown 0.6s 0.3s forwards; }
-  .nav-btn { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; border: none; cursor: none; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: transform 0.25s ease, filter 0.25s ease; }
-  .nav-btn:hover { transform: translateY(-4px) scale(1.04); filter: brightness(0.95); }
-  .nav-home { width: 110px; height: 90px; background: #f7ce53; mask-image: url("shapes/home-shape.svg"); -webkit-mask-image: url("shapes/home-shape.svg"); color: var(--bleu); mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
-  .nav-project { width: 95px; height: 90px; background: var(--bleu); color: var(--blanc); border-radius: 8px; }
-  .nav-about { width: 95px; height: 90px; background: var(--bordeaux); color: var(--creme); border-radius: 50%; }
+    body {
+      font-family: 'zodiak', sans-serif;
+      background: var(--blanc);
+      color: var(--noir);
+      overflow-x: hidden;
+      cursor: none;
+    }
 
-  .back-link { position: fixed; top: 36px; left: 36px; z-index: 100; display: inline-flex; align-items: center; gap: 8px; font-family: 'Clash Display', sans-serif; font-size: 13px; font-weight: 700; color: var(--creme); text-decoration: none; opacity: 0; animation: fadeDown 0.5s 0.5s forwards; transition: color 0.2s; }
-  .back-link:hover { color: var(--jaune); }
-  .back-arrow { transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
-  .back-link:hover .back-arrow { transform: translateX(-5px); }
+    .cursor {
+      width: 12px;
+      height: 12px;
+      background: var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease, background 0.2s ease;
+      transform: translate(-50%, -50%);
+    }
 
-  /* HERO */
-  .hero { min-height: 68vh; background: #050d05; padding: 140px 56px 64px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+    .cursor-follower {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.35s ease;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
 
-  .hero-label { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 16px; opacity: 0; animation: slideUp 0.6s 0.5s forwards; position: relative; z-index: 2; }
-  .hero-title { font-family: 'Clash Display', sans-serif; font-size: clamp(48px, 8vw, 112px); font-weight: 800; color: var(--blanc); line-height: 0.88; letter-spacing: -4px; opacity: 0; animation: slideUp 0.9s 0.6s cubic-bezier(0.16,1,0.3,1) forwards; position: relative; z-index: 2; }
-  .hero-title .accent { color: #4aff4a; }
-  .hero-title .dim { color: rgba(255,255,255,0.2); }
-  .hero-meta-bar { display: flex; gap: 40px; margin-top: 40px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08); opacity: 0; animation: slideUp 0.6s 0.9s forwards; flex-wrap: wrap; position: relative; z-index: 2; }
-  .hero-meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 5px; }
-  .hero-meta-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
-  .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-  .hero-tag { font-size: 11px; font-weight: 700; padding: 3px 11px; border-radius: 100px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65); }
+    nav {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeDown 0.6s 0.3s forwards;
+    }
 
-  /* CONTENT */
-  .content { max-width: 860px; margin: 0 auto; padding: 80px 48px; }
-  .s-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux); opacity: 0.6; margin-bottom: 10px; }
-  .s-title { font-family: 'Clash Display', sans-serif; font-size: clamp(26px, 3vw, 38px); font-weight: 700; color: var(--bordeaux); letter-spacing: -0.5px; line-height: 1.05; margin-bottom: 20px; }
-  .s-body { font-size: 15px; line-height: 1.78; color: rgba(26,16,8,0.68); }
-  .s-body p + p { margin-top: 14px; }
+    .nav-btn {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: none;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
 
-  .content-block { margin-bottom: 72px; opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
-  .content-block.visible { opacity: 1; transform: translateY(0); }
-  .divider { width: 100%; height: 1px; background: rgba(92,61,30,0.1); margin: 56px 0; }
+    .nav-btn:hover {
+      transform: translateY(-4px) scale(1.04);
+      filter: brightness(0.95);
+    }
 
-  /* DIAGRAM */
-  .diagram-wrap { background: var(--creme); border-radius: 16px; padding: 36px 32px; margin: 32px 0; opacity: 0; transform: translateY(24px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
-  .diagram-wrap.visible { opacity: 1; transform: translateY(0); }
-  .diagram-wrap.dark { background: #060f06; }
-  .diagram-caption { font-size: 12px; color: var(--brun); opacity: 0.5; text-align: center; margin-top: 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
-  .diagram-wrap.dark .diagram-caption { color: rgba(255,255,255,0.2); }
+    .nav-home {
+      width: 110px;
+      height: 90px;
+      background: #f7ce53;
+      mask-image: url("shapes/home-shape.svg");
+      -webkit-mask-image: url("shapes/home-shape.svg");
+      color: var(--bleu);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+    }
 
-  /* QUOTE */
-  .quote-block { border-left: 4px solid #4aff4a; padding: 20px 28px; margin: 32px 0; background: rgba(74,255,74,0.04); border-radius: 0 12px 12px 0; }
-  .quote-text { font-family: 'Clash Display', sans-serif; font-size: 19px; font-weight: 700; color: var(--brun); line-height: 1.4; }
-  .quote-sub { font-size: 13px; color: var(--brun); opacity: 0.5; margin-top: 10px; font-style: italic; }
+    .nav-project {
+      width: 95px;
+      height: 90px;
+      background: var(--bleu);
+      color: var(--blanc);
+      border-radius: 8px;
+    }
 
-  /* CODE COMPARISON */
-  .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 28px 0; }
-  .code-box { border-radius: 12px; overflow: hidden; }
-  .code-header { padding: 10px 16px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-  .code-header.java { background: #1e3a5f; color: #7fb3e8; }
-  .code-header.asm { background: #1a3a1a; color: #7ec87a; }
-  .code-body { padding: 16px; font-family: monospace; font-size: 12px; line-height: 1.7; }
-  .code-body.java { background: #0d1e30; color: #b8d4f0; }
-  .code-body.asm { background: #0a1a0a; color: #a8d8a8; }
-  .code-body .kw { color: #e8b84b; }
-  .code-body .cm { color: #4a6a4a; font-style: italic; }
-  .code-body .num { color: #ff9a7a; }
+    .nav-about {
+      width: 95px;
+      height: 90px;
+      background: var(--bordeaux);
+      color: var(--creme);
+      border-radius: 50%;
+    }
 
-  /* GAME RULES GRID */
-  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
-  .rule-card { background: var(--blanc); border: 1.5px solid rgba(26,74,26,0.12); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
-  .rule-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; }
-  .rule-card.underpop::before { background: #2f5da1; }
-  .rule-card.overpop::before { background: var(--bordeaux); }
-  .rule-card.repro::before { background: #2d7a2d; }
-  .rule-card.stasis::before { background: var(--jaune); }
-  .rule-name { font-family: 'Clash Display', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-  .rule-card.underpop .rule-name { color: #2f5da1; }
-  .rule-card.overpop .rule-name { color: var(--bordeaux); }
-  .rule-card.repro .rule-name { color: #2d7a2d; }
-  .rule-card.stasis .rule-name { color: #9A6F00; }
-  .rule-desc { font-size: 13px; line-height: 1.6; color: rgba(26,16,8,0.6); }
-  .rule-asm { font-family: monospace; font-size: 11px; color: rgba(26,16,8,0.35); margin-top: 8px; background: var(--creme); padding: 4px 8px; border-radius: 4px; display: inline-block; }
+    .back-link {
+      position: fixed;
+      top: 36px;
+      left: 36px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--creme);
+      text-decoration: none;
+      opacity: 0;
+      animation: fadeDown 0.5s 0.5s forwards;
+      transition: color 0.2s;
+    }
 
-  /* CHALLENGES */
-  .challenge-list { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; }
-  .challenge-item { display: flex; gap: 20px; padding: 24px; background: var(--blanc); border: 1.5px solid rgba(92,61,30,0.08); border-radius: 12px; }
-  .challenge-icon { font-size: 28px; flex-shrink: 0; width: 44px; text-align: center; }
-  .challenge-title { font-family: 'Clash Display', sans-serif; font-size: 17px; font-weight: 700; color: var(--bordeaux); margin-bottom: 6px; }
-  .challenge-desc { font-size: 14px; line-height: 1.7; color: rgba(26,16,8,0.62); }
+    .back-link:hover {
+      color: var(--jaune);
+    }
 
-  /* FUNCTIONS TABLE */
-  .fn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
-  .fn-card { background: var(--creme); border-radius: 8px; padding: 12px 14px; }
-  .fn-name { font-family: monospace; font-size: 12px; font-weight: 700; color: var(--vert); margin-bottom: 4px; }
-  .fn-desc { font-size: 11px; color: var(--brun); opacity: 0.6; line-height: 1.4; }
+    .back-arrow {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-  /* LEARNED */
-  .learned-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
-  .learned-card { background: var(--creme); border-radius: 12px; padding: 20px; }
-  .learned-num { font-size: 11px; font-weight: 800; color: var(--bordeaux); opacity: 0.4; letter-spacing: 0.1em; margin-bottom: 8px; }
-  .learned-text { font-size: 14px; line-height: 1.65; color: var(--brun); }
+    .back-link:hover .back-arrow {
+      transform: translateX(-5px);
+    }
 
-  /* PROJECT NAV */
-  .project-nav { background: var(--creme); padding: 48px; display: flex; justify-content: space-between; align-items: center; }
-  .proj-nav-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
-  .proj-nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brun); opacity: 0.4; }
-  .proj-nav-name { font-family: 'Clash Display', sans-serif; font-size: 20px; font-weight: 700; color: var(--bordeaux); transition: letter-spacing 0.3s ease; }
-  .proj-nav-link:hover .proj-nav-name { letter-spacing: 0.5px; }
+    .hero {
+      min-height: 68vh;
+      background: #050d05;
+      padding: 140px 56px 64px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
 
-  footer { background: var(--blanc); padding: 32px 48px 0; }
-  .footer-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 28px; border-bottom: 1px solid rgba(92,61,30,0.12); font-size: 14px; color: var(--brun); font-weight: 500; }
-  .footer-nav { display: flex; gap: 8px; align-items: center; }
-  .footer-nav a { color: var(--brun); text-decoration: none; font-weight: 600; }
-  .footer-nav a:hover { color: var(--bordeaux); }
-  .footer-dot { opacity: 0.4; }
-  .footer-blobs { display: flex; align-items: flex-end; height: 120px; overflow: hidden; }
-  .blob { height: 105px; flex-shrink: 0; }
-  .blob-yellow { width: 34%; background: var(--jaune); border-radius: 70px 70px 0 0; }
-  .blob-blue { width: 34%; background: var(--bleu); border-radius: 0; }
-  .blob-red { width: 32%; background: #C8431A; border-radius: 50% 50% 0 0; }
+    .hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: slideUp 0.6s 0.5s forwards;
+      position: relative;
+      z-index: 2;
+    }
 
-  @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeDown { to { opacity: 1; } }
-</style>
+    .hero-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(48px, 8vw, 112px);
+      font-weight: 800;
+      color: var(--blanc);
+      line-height: 0.88;
+      letter-spacing: -4px;
+      opacity: 0;
+      animation: slideUp 0.9s 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title .accent {
+      color: #4aff4a;
+    }
+
+    .hero-title,
+    .hero-title div {
+      font-family: 'Clash Display', sans-serif !important;
+    }
+
+    .hero-title .dim {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-meta-bar {
+      display: flex;
+      gap: 40px;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      animation: slideUp 0.6s 0.9s forwards;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+      margin-bottom: 5px;
+    }
+
+    .hero-meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    .s-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bordeaux);
+      opacity: 0.6;
+      margin-bottom: 10px;
+    }
+
+    .s-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 700;
+      color: var(--bordeaux);
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .s-body {
+      font-size: 15px;
+      line-height: 1.78;
+      color: rgba(26, 16, 8, 0.68);
+    }
+
+    .s-body p+p {
+      margin-top: 14px;
+    }
+
+    .content-block {
+      margin-bottom: 72px;
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .content-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(92, 61, 30, 0.1);
+      margin: 56px 0;
+    }
+
+    .diagram-wrap {
+      background: var(--creme);
+      border-radius: 16px;
+      padding: 36px 32px;
+      margin: 32px 0;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .diagram-wrap.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .diagram-wrap.dark {
+      background: #060f06;
+    }
+
+    .diagram-caption {
+      font-size: 12px;
+      color: var(--brun);
+      opacity: 0.5;
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .diagram-wrap.dark .diagram-caption {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .quote-block {
+      border-left: 4px solid #4aff4a;
+      padding: 20px 28px;
+      margin: 32px 0;
+      background: rgba(74, 255, 74, 0.04);
+      border-radius: 0 12px 12px 0;
+    }
+
+    .quote-text {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--brun);
+      line-height: 1.4;
+    }
+
+    .quote-sub {
+      font-size: 13px;
+      color: var(--brun);
+      opacity: 0.5;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    .code-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .code-box {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .code-header.java {
+      background: #1e3a5f;
+      color: #7fb3e8;
+    }
+
+    .code-header.asm {
+      background: #1a3a1a;
+      color: #7ec87a;
+    }
+
+    .code-body {
+      padding: 16px;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .code-body.java {
+      background: #0d1e30;
+      color: #b8d4f0;
+    }
+
+    .code-body.asm {
+      background: #0a1a0a;
+      color: #a8d8a8;
+    }
+
+    .code-body .kw {
+      color: #e8b84b;
+    }
+
+    .code-body .cm {
+      color: #4a6a4a;
+      font-style: italic;
+    }
+
+    .code-body .num {
+      color: #ff9a7a;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .rule-card {
+      background: var(--blanc);
+      border: 1.5px solid rgba(26, 74, 26, 0.12);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rule-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .rule-card.underpop::before {
+      background: #2f5da1;
+    }
+
+    .rule-card.overpop::before {
+      background: var(--bordeaux);
+    }
+
+    .rule-card.repro::before {
+      background: #2d7a2d;
+    }
+
+    .rule-card.stasis::before {
+      background: var(--jaune);
+    }
+
+    .rule-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .rule-card.underpop .rule-name {
+      color: #2f5da1;
+    }
+
+    .rule-card.overpop .rule-name {
+      color: var(--bordeaux);
+    }
+
+    .rule-card.repro .rule-name {
+      color: #2d7a2d;
+    }
+
+    .rule-card.stasis .rule-name {
+      color: #9A6F00;
+    }
+
+    .rule-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(26, 16, 8, 0.6);
+    }
+
+    .rule-asm {
+      font-family: monospace;
+      font-size: 11px;
+      color: rgba(26, 16, 8, 0.35);
+      margin-top: 8px;
+      background: var(--creme);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .challenge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .challenge-item {
+      display: flex;
+      gap: 20px;
+      padding: 24px;
+      background: var(--blanc);
+      border: 1.5px solid rgba(92, 61, 30, 0.08);
+      border-radius: 12px;
+    }
+
+    .challenge-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      width: 44px;
+      text-align: center;
+    }
+
+    .challenge-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      margin-bottom: 6px;
+    }
+
+    .challenge-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.62);
+    }
+
+    .fn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .fn-card {
+      background: var(--creme);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .fn-name {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--vert);
+      margin-bottom: 4px;
+    }
+
+    .fn-desc {
+      font-size: 11px;
+      color: var(--brun);
+      opacity: 0.6;
+      line-height: 1.4;
+    }
+
+    .learned-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .learned-card {
+      background: var(--creme);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .learned-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--bordeaux);
+      opacity: 0.4;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .learned-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--brun);
+    }
+
+    .project-nav {
+      background: var(--creme);
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .proj-nav-link {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .proj-nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brun);
+      opacity: 0.4;
+    }
+
+    .proj-nav-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bordeaux);
+      transition: letter-spacing 0.3s ease;
+    }
+
+    .proj-nav-link:hover .proj-nav-name {
+      letter-spacing: 0.5px;
+    }
+
+    footer {
+      background: var(--blanc);
+      padding: 32px 48px 0;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.12);
+      font-size: 14px;
+      color: var(--brun);
+      font-weight: 500;
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .footer-nav a {
+      color: var(--brun);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-nav a:hover {
+      color: var(--bordeaux);
+    }
+
+    .footer-dot {
+      opacity: 0.4;
+    }
+
+    .footer-blobs {
+      display: flex;
+      align-items: flex-end;
+      height: 120px;
+      overflow: hidden;
+    }
+
+    .blob {
+      height: 105px;
+      flex-shrink: 0;
+    }
+
+    .blob-yellow {
+      width: 34%;
+      background: var(--jaune);
+      border-radius: 70px 70px 0 0;
+    }
+
+    .blob-blue {
+      width: 34%;
+      background: var(--bleu);
+      border-radius: 0;
+    }
+
+    .blob-red {
+      width: 32%;
+      background: #C8431A;
+      border-radius: 50% 50% 0 0;
+    }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-follower" id="follower"></div>
-<a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="follower"></div>
+  <a href="projects.html" class="back-link"><span class="back-arrow">←</span> Back to projects</a>
 
-<nav>
-  <a href="index.html" class="nav-btn nav-home">Home</a>
-  <a href="projects.html" class="nav-btn nav-project">Project</a>
-  <a href="about.html" class="nav-btn nav-about">About</a>
-</nav>
+  <nav>
+    <a href="index.html" class="nav-btn nav-home">Home</a>
+    <a href="projects.html" class="nav-btn nav-project">Project</a>
+    <a href="about.html" class="nav-btn nav-about">About</a>
+  </nav>
 
-<!-- HERO with animated cell grid -->
-<section class="hero">
-  <div class="hero-cells" id="heroGrid"></div>
-  <p class="hero-label">Project 06 - CS-200 · EPFL · 2024</p>
-  <h1 class="hero-title">
-    <div>Game <span class="accent">of Life</span></div>
-    <div class="dim">in Assembly</div>
-  </h1>
-  <div class="hero-meta-bar">
-    <div><div class="hero-meta-label">Language</div><div class="hero-meta-value">RISC-V Assembly</div></div>
-    <div><div class="hero-meta-label">Hardware</div><div class="hero-meta-value">Gecko5 FPGA board</div></div>
-    <div><div class="hero-meta-label">Display</div><div class="hero-meta-value">10×12 RGB LED array</div></div>
-    <div><div class="hero-meta-label">Stack</div><div class="hero-tags"><span class="hero-tag">Assembly</span><span class="hero-tag">RISC-V</span><span class="hero-tag">MMIO</span><span class="hero-tag">FPGA</span></div></div>
-  </div>
-</section>
-
-<div class="content">
-
-  <!-- THE LATIN ANALOGY -->
-  <div class="content-block">
-    <p class="s-label">The project</p>
-    <h2 class="s-title">Implementing Conway's Game of Life - in the language beneath all languages</h2>
-    <div class="s-body">
-      <p>The goal was to implement a fully playable version of Conway's Game of Life in RISC-V assembly, running on a real FPGA board with a 10×12 LED grid, physical buttons for control, and a 7-segment display for the step counter.</p>
-      <p>At this point in my studies, I had only ever coded in Java. Assembly was a completely different world, and the mental shift required was profound.</p>
-    </div>
-
-    <div class="quote-block">
-      <div class="quote-text">It felt like doing Latin. Latin is the foundation of French, and Assembly is the foundation of every high-level language I had ever used. You're not calling methods anymore. You're moving bytes.</div>
-    </div>
-
-    <div class="s-body">
-      <p>A for loop in Java is one line. In assembly, it's a counter register, an increment, a branch condition, and a label to jump back to. Every abstraction you take for granted, variables, functions, if/else, disappears. What's left is the machine itself.</p>
-    </div>
-  </div>
-
-  <!-- CODE COMPARISON -->
-  <div class="content-block">
-    <p class="s-label">The mental shift</p>
-    <h2 class="s-title">The same loop : Java vs. Assembly</h2>
-    <div class="s-body"><p>Something as simple as counting neighbours requires completely different thinking at the assembly level.</p></div>
-
-    <div class="code-compare">
-      <div class="code-box">
-        <div class="code-header java">♘ Java : high level</div>
-        <div class="code-body java"><span class="kw">int</span> count = <span class="num">0</span>;
-<span class="kw">for</span> (<span class="kw">int</span> dx = -<span class="num">1</span>; dx <= <span class="num">1</span>; dx++) {
-  <span class="kw">for</span> (<span class="kw">int</span> dy = -<span class="num">1</span>; dy <= <span class="num">1</span>; dy++) {
-    <span class="kw">if</span> (dx==<span class="num">0</span> && dy==<span class="num">0</span>) <span class="kw">continue</span>;
-    count += getCell(
-      (x+dx+<span class="num">12</span>)%<span class="num">12</span>,
-      (y+dy+<span class="num">10</span>)%<span class="num">10</span>
-    );
-  }
-}
-<span class="cm">// 8 lines, reads like English</span></div>
+  <section class="hero">
+    <div class="hero-cells" id="heroGrid"></div>
+    <p class="hero-label">Project 06 - CS-200 · EPFL · 2024</p>
+    <h1 class="hero-title">
+      <div>Game <span class="accent">of Life</span></div>
+      <div class="dim">in Assembly</div>
+    </h1>
+    <div class="hero-meta-bar">
+      <div>
+        <div class="hero-meta-label">Language</div>
+        <div class="hero-meta-value">RISC-V Assembly</div>
       </div>
-      <div class="code-box">
-        <div class="code-header asm">♗ RISC-V Assembly</div>
-        <div class="code-body asm"><span class="cm"># count neighbours of (a0,a1)</span>
-li   t0, <span class="num">0</span>       <span class="cm"># count = 0</span>
-li   t1, -<span class="num">1</span>      <span class="cm"># dx = -1</span>
-dx_loop:
-  li   t2, -<span class="num">1</span>    <span class="cm"># dy = -1</span>
-  dy_loop:
-    <span class="cm"># skip (0,0)</span>
-    beq  t1, x0, skip_center
-    <span class="cm"># compute (x+dx) mod 12</span>
-    add  a0, s0, t1
-    li   t4, <span class="num">12</span>
-    rem  a0, a0, t4
-    <span class="cm"># ... 20+ more lines</span>
-  addi t2, t2, <span class="num">1</span>
-  blt  t2, t3, dy_loop
-addi t1, t1, <span class="num">1</span>
-blt  t1, t3, dx_loop</div>
+      <div>
+        <div class="hero-meta-label">Hardware</div>
+        <div class="hero-meta-value">Gecko5 FPGA board</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Display</div>
+        <div class="hero-meta-value">10×12 RGB LED array</div>
+      </div>
+      <div>
+        <div class="hero-meta-label">Stack</div>
+        <div class="hero-tags"><span class="hero-tag">Assembly</span><span class="hero-tag">RISC-V</span><span
+            class="hero-tag">MMIO</span><span class="hero-tag">FPGA</span></div>
       </div>
     </div>
-    <div class="s-body" style="margin-top:16px;">
-      <p>Every single Java concept, loops, conditionals, modulo, function calls, becomes explicit register manipulation and jump instructions. Nothing is implicit. Nothing is automatic. You manage everything: the stack, the return address, the caller-saved registers. It is humbling, and it is eye-opening.</p>
-    </div>
-  </div>
+  </section>
 
-  <div class="divider"></div>
+  <div class="content">
 
-  <!-- WHAT IS THE GAME -->
-  <div class="content-block">
-    <p class="s-label">The game</p>
-    <h2 class="s-title">Conway's Game of Life - four rules, infinite complexity</h2>
-    <div class="s-body">
-      <p>The Game of Life is a cellular automaton where cells on a 2D grid live or die based solely on their neighbours. It has no players, only an initial state and four deterministic rules. Despite their simplicity, they produce astonishingly complex emergent behaviour.</p>
-    </div>
+    <div class="content-block">
+      <p class="s-label">The project</p>
+      <h2 class="s-title">Implementing Conway's Game of Life - in the language beneath all languages</h2>
+      <div class="s-body">
+        <p>The goal was to implement a fully playable version of Conway's Game of Life in RISC-V assembly, running on a
+          real FPGA board with a 10×12 LED grid, physical buttons for control, and a 7-segment display for the step
+          counter.</p>
+        <p>At this point in my studies, I had only ever coded in Java. Assembly was a completely different world, and
+          the mental shift required was profound.</p>
+      </div>
 
-    <div class="rules-grid">
-      <div class="rule-card underpop">
-        <div class="rule-name">Underpopulation</div>
-        <div class="rule-desc">A live cell with fewer than 2 live neighbours dies, it's isolated.</div>
-        <div class="rule-asm">neighbours &lt; 2 → dead</div>
+      <div class="quote-block">
+        <div class="quote-text">It felt like doing Latin. Latin is the foundation of French, and Assembly is the
+          foundation of every high-level language I had ever used. You're not calling methods anymore. You're moving
+          bytes.</div>
       </div>
-      <div class="rule-card overpop">
-        <div class="rule-name">Overpopulation</div>
-        <div class="rule-desc">A live cell with more than 3 live neighbours dies, too crowded.</div>
-        <div class="rule-asm">neighbours &gt; 3 → dead</div>
-      </div>
-      <div class="rule-card repro">
-        <div class="rule-name">Reproduction</div>
-        <div class="rule-desc">A dead cell with exactly 3 live neighbours comes to life.</div>
-        <div class="rule-asm">dead && neighbours == 3 → alive</div>
-      </div>
-      <div class="rule-card stasis">
-        <div class="rule-name">Stasis</div>
-        <div class="rule-desc">A live cell with 2 or 3 neighbours survives to the next generation.</div>
-        <div class="rule-asm">alive && 2 ≤ neighbours ≤ 3 → alive</div>
+
+      <div class="s-body">
+        <p>A for loop in Java is one line. In assembly, it's a counter register, an increment, a branch condition, and a
+          label to jump back to. Every abstraction you take for granted, variables, functions, if/else, disappears.
+          What's left is the machine itself.</p>
       </div>
     </div>
-  </div>
 
-  <!-- ARCHITECTURE DIAGRAM -->
-  <div class="diagram-wrap dark">
-    <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
-      <defs>
-        <marker id="arrg" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill="rgba(74,255,74,0.35)"/>
-        </marker>
-      </defs>
+    <div class="content-block">
+      <p class="s-label">The mental shift</p>
+      <h2 class="s-title">The same loop : Java vs. Assembly</h2>
+      <div class="s-body">
+        <p>Something as simple as counting neighbours requires completely different thinking at the assembly level.</p>
+      </div>
 
-      <!-- GSA0 -->
-      <rect x="0" y="40" width="110" height="80" rx="8" fill="rgba(74,255,74,0.08)"/>
-      <text x="55" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#4aff4a">GSA 0</text>
-      <text x="55" y="91" text-anchor="middle" font-family="monospace" font-size="9" fill="#4aff4a" opacity="0.5">10 words × 32b</text>
-      <text x="55" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a" opacity="0.35">current state</text>
-
-      <!-- GSA1 -->
-      <rect x="130" y="40" width="110" height="80" rx="8" fill="rgba(74,255,74,0.04)"/>
-      <text x="185" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#4aff4a" opacity="0.5">GSA 1</text>
-      <text x="185" y="91" text-anchor="middle" font-family="monospace" font-size="9" fill="#ebffde" opacity="0.53">10 words × 32b</text>
-      <text x="185" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#ebffde" opacity="0.525">next state</text>
-
-      <!-- swap arrow -->
-      <path d="M55 30 Q120 10 185 30" stroke="#4aff4a" stroke-width="1" fill="none" opacity="0.2" stroke-dasharray="3"/>
-      <text x="120" y="8" text-anchor="middle" font-family="monospace" font-size="9" fill="#ebffde" opacity="0.53">swap at each step</text>
-
-      <!-- update_gsa -->
-      <rect x="270" y="50" width="120" height="60" rx="8" fill="rgba(232,184,75,0.08)"/>
-      <text x="330" y="79" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#E8B84B">update_gsa</text>
-      <text x="330" y="95" text-anchor="middle" font-family="monospace" font-size="8" fill="#E8B84B" opacity="0.5">apply 4 rules</text>
-
-      <!-- mask -->
-      <rect x="410" y="50" width="90" height="60" rx="8" fill="rgba(47,93,161,0.12)"/>
-      <text x="455" y="79" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#7A9FD4">mask</text>
-      <text x="455" y="95" text-anchor="middle" font-family="monospace" font-size="8" fill="#7A9FD4" opacity="0.5">AND walls</text>
-
-      <!-- draw_gsa -->
-      <rect x="520" y="50" width="90" height="60" rx="8" fill="rgba(74,255,74,0.08)"/>
-      <text x="565" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#4aff4a">draw_gsa</text>
-      <text x="565" y="91" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a" opacity="0.5">→ LEDs</text>
-
-      <!-- LED array -->
-      <rect x="630" y="40" width="90" height="80" rx="8" fill="rgba(74,255,74,0.15)"/>
-      <text x="675" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#4aff4a">LED array</text>
-      <text x="675" y="91" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a" opacity="0.5">10×12 pixels</text>
-      <text x="675" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a" opacity="0.35">0x50000000</text>
-
-      <!-- arrows -->
-      <line x1="240" y1="80" x2="268" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3" marker-end="url(#arrg)"/>
-      <line x1="390" y1="80" x2="408" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3" marker-end="url(#arrg)"/>
-      <line x1="500" y1="80" x2="518" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3" marker-end="url(#arrg)"/>
-      <line x1="610" y1="80" x2="628" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3" marker-end="url(#arrg)"/>
-
-      <text x="0" y="148" font-family="monospace" font-size="9" fill="#ebffde">Torus topology - edges wrap: (x+12)%12, (y+10)%10, implemented in assembly via rem instruction</text>
-    </svg>
-    <p class="diagram-caption" style="color:rgba(219, 248, 219, 0.927);">Game loop - GSA double-buffering → rules → mask → draw</p>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- CHALLENGES -->
-  <div class="content-block">
-    <p class="s-label">Challenges</p>
-    <h2 class="s-title">What made this project hard</h2>
-
-    <div class="challenge-list">
-      <div class="challenge-item">
-        <div class="challenge-icon">Ⅰ</div>
-        <div>
-          <div class="challenge-title">Thinking without abstractions</div>
-          <div class="challenge-desc">In Java, a variable is a name. In assembly, a variable is a register, and there are only 32 of them, some with special roles you can't touch. Running out of registers mid-function means spilling to the stack manually. Every simple operation requires a mental model of what's where at every instruction. Coming from Java, this was the single hardest adjustment.</div>
+      <div class="code-compare">
+        <div class="code-box">
+          <div class="code-header java">♘ Java : high level</div>
+          <div class="code-body java"><span class="kw">int</span> count = <span class="num">0</span>;
+            <span class="kw">for</span> (<span class="kw">int</span> dx = -<span class="num">1</span>; dx <= <span
+              class="num">1</span>; dx++) {
+              <span class="kw">for</span> (<span class="kw">int</span> dy = -<span class="num">1</span>; dy <= <span
+                class="num">1</span>; dy++) {
+                <span class="kw">if</span> (dx==<span class="num">0</span> && dy==<span class="num">0</span>) <span
+                  class="kw">continue</span>;
+                count += getCell(
+                (x+dx+<span class="num">12</span>)%<span class="num">12</span>,
+                (y+dy+<span class="num">10</span>)%<span class="num">10</span>
+                );
+                }
+                }
+                <span class="cm">// 8 lines, reads like English</span>
+          </div>
+        </div>
+        <div class="code-box">
+          <div class="code-header asm">♗ RISC-V Assembly</div>
+          <div class="code-body asm"><span class="cm"># count neighbours of (a0,a1)</span>
+            li t0, <span class="num">0</span> <span class="cm"># count = 0</span>
+            li t1, -<span class="num">1</span> <span class="cm"># dx = -1</span>
+            dx_loop:
+            li t2, -<span class="num">1</span> <span class="cm"># dy = -1</span>
+            dy_loop:
+            <span class="cm"># skip (0,0)</span>
+            beq t1, x0, skip_center
+            <span class="cm"># compute (x+dx) mod 12</span>
+            add a0, s0, t1
+            li t4, <span class="num">12</span>
+            rem a0, a0, t4
+            <span class="cm"># ... 20+ more lines</span>
+            addi t2, t2, <span class="num">1</span>
+            blt t2, t3, dy_loop
+            addi t1, t1, <span class="num">1</span>
+            blt t1, t3, dx_loop
+          </div>
         </div>
       </div>
-      <div class="challenge-item">
-        <div class="challenge-icon">Ⅱ</div>
-        <div>
-          <div class="challenge-title">Function calls and the stack</div>
-          <div class="challenge-desc">In Java, you call a method and it just works. In RISC-V assembly, you have to manually save the return address (ra), save any registers you need to preserve across the call, call the function, restore everything, then return. The calling convention, which registers are caller-saved vs callee-saved, has to be respected exactly, or the program crashes in a completely unpredictable way. This took many debugging sessions to internalize.</div>
-        </div>
+      <div class="s-body" style="margin-top:16px;">
+        <p>Every single Java concept, loops, conditionals, modulo, function calls, becomes explicit register
+          manipulation and jump instructions. Nothing is implicit. Nothing is automatic. You manage everything: the
+          stack, the return address, the caller-saved registers. It is humbling, and it is eye-opening.</p>
       </div>
-      <div class="challenge-item">
-        <div class="challenge-icon">Ⅲ</div>
-        <div>
-          <div class="challenge-title">Torus topology with modulo</div>
-          <div class="challenge-desc">The game grid wraps around, the cell at column 11 is adjacent to the cell at column 0. In Java, this is one modulo operation. In assembly, handling negative results of modulo (-1 mod 12 should be 11, not -1) requires additional correction instructions. Every neighbour lookup involves computing (x±1+12)%12 and (y±1+10)%10 correctly, for all 8 neighbours of every cell on a 120-cell grid.</div>
-        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">The game</p>
+      <h2 class="s-title">Conway's Game of Life - four rules, infinite complexity</h2>
+      <div class="s-body">
+        <p>The Game of Life is a cellular automaton where cells on a 2D grid live or die based solely on their
+          neighbours. It has no players, only an initial state and four deterministic rules. Despite their simplicity,
+          they produce astonishingly complex emergent behaviour.</p>
       </div>
-      <div class="challenge-item">
-        <div class="challenge-icon">Ⅳ</div>
-        <div>
-          <div class="challenge-title">MMIO - writing to hardware through memory</div>
-          <div class="challenge-desc">To light up an LED, you don't call a function, you construct a 32-bit word with the right bit pattern for column, row, color channel, and value, then store it at the right memory address. Getting one LED wrong meant debugging the bit packing manually. The LED control register alone has 5 distinct fields across 32 bits, and the draw_gsa procedure has to get every single one right for each of the 120 cells.</div>
+
+      <div class="rules-grid">
+        <div class="rule-card underpop">
+          <div class="rule-name">Underpopulation</div>
+          <div class="rule-desc">A live cell with fewer than 2 live neighbours dies, it's isolated.</div>
+          <div class="rule-asm">neighbours &lt; 2 → dead</div>
+        </div>
+        <div class="rule-card overpop">
+          <div class="rule-name">Overpopulation</div>
+          <div class="rule-desc">A live cell with more than 3 live neighbours dies, too crowded.</div>
+          <div class="rule-asm">neighbours &gt; 3 → dead</div>
+        </div>
+        <div class="rule-card repro">
+          <div class="rule-name">Reproduction</div>
+          <div class="rule-desc">A dead cell with exactly 3 live neighbours comes to life.</div>
+          <div class="rule-asm">dead && neighbours == 3 → alive</div>
+        </div>
+        <div class="rule-card stasis">
+          <div class="rule-name">Stasis</div>
+          <div class="rule-desc">A live cell with 2 or 3 neighbours survives to the next generation.</div>
+          <div class="rule-asm">alive && 2 ≤ neighbours ≤ 3 → alive</div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- WHAT WAS IMPLEMENTED -->
-  <div class="content-block">
-    <p class="s-label">What was built</p>
-    <h2 class="s-title">20 assembly procedures from scratch</h2>
-    <div class="s-body"><p>The full game required implementing 20 independent assembly procedures, each tested by an automated grader. From low-level LED control to the full game loop with button handling and interrupt-driven input.</p></div>
+    <div class="diagram-wrap dark">
+      <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <defs>
+          <marker id="arrg" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="rgba(74,255,74,0.35)" />
+          </marker>
+        </defs>
 
-    <div class="fn-grid">
-      <div class="fn-card"><div class="fn-name">clear_leds</div><div class="fn-desc">Reset all 120 LEDs to off</div></div>
-      <div class="fn-card"><div class="fn-name">set_pixel</div><div class="fn-desc">Light one LED at (x,y) in red</div></div>
-      <div class="fn-card"><div class="fn-name">wait</div><div class="fn-desc">Variable delay based on game speed</div></div>
-      <div class="fn-card"><div class="fn-name">get_gsa</div><div class="fn-desc">Read a row from active GSA</div></div>
-      <div class="fn-card"><div class="fn-name">set_gsa</div><div class="fn-desc">Write a row to active GSA</div></div>
-      <div class="fn-card"><div class="fn-name">draw_gsa</div><div class="fn-desc">Render full GSA to LED array</div></div>
-      <div class="fn-card"><div class="fn-name">random_gsa</div><div class="fn-desc">Fill GSA with random cells</div></div>
-      <div class="fn-card"><div class="fn-name">find_neighbours</div><div class="fn-desc">Count live neighbours of (x,y)</div></div>
-      <div class="fn-card"><div class="fn-name">cell_fate</div><div class="fn-desc">Apply 4 GoL rules to one cell</div></div>
-      <div class="fn-card"><div class="fn-name">update_gsa</div><div class="fn-desc">Compute next full game state</div></div>
-      <div class="fn-card"><div class="fn-name">mask</div><div class="fn-desc">Apply wall mask, draw walls in blue</div></div>
-      <div class="fn-card"><div class="fn-name">change_speed</div><div class="fn-desc">Inc/dec game speed 1–10</div></div>
-      <div class="fn-card"><div class="fn-name">pause_game</div><div class="fn-desc">Toggle pause/resume</div></div>
-      <div class="fn-card"><div class="fn-name">change_steps</div><div class="fn-desc">Set step count via buttons</div></div>
-      <div class="fn-card"><div class="fn-name">increment_seed</div><div class="fn-desc">Cycle through seeds / random</div></div>
-      <div class="fn-card"><div class="fn-name">update_state</div><div class="fn-desc">FSM: INIT → RAND → RUN</div></div>
-      <div class="fn-card"><div class="fn-name">select_action</div><div class="fn-desc">Dispatch button events</div></div>
-      <div class="fn-card"><div class="fn-name">get_input</div><div class="fn-desc">Read BUTTONS register</div></div>
-      <div class="fn-card"><div class="fn-name">decrement_step</div><div class="fn-desc">Update 7-seg display</div></div>
-      <div class="fn-card"><div class="fn-name">reset_game</div><div class="fn-desc">Full game reset to defaults</div></div>
+        <rect x="0" y="40" width="110" height="80" rx="8" fill="rgba(74,255,74,0.08)" />
+        <text x="55" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#4aff4a">GSA 0</text>
+        <text x="55" y="91" text-anchor="middle" font-family="monospace" font-size="9" fill="#4aff4a" opacity="0.5">10
+          words × 32b</text>
+        <text x="55" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a"
+          opacity="0.35">current state</text>
+
+        <rect x="130" y="40" width="110" height="80" rx="8" fill="rgba(74,255,74,0.04)" />
+        <text x="185" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#4aff4a" opacity="0.5">GSA 1</text>
+        <text x="185" y="91" text-anchor="middle" font-family="monospace" font-size="9" fill="#ebffde" opacity="0.53">10
+          words × 32b</text>
+        <text x="185" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#ebffde"
+          opacity="0.525">next state</text>
+
+        <path d="M55 30 Q120 10 185 30" stroke="#4aff4a" stroke-width="1" fill="none" opacity="0.2"
+          stroke-dasharray="3" />
+        <text x="120" y="8" text-anchor="middle" font-family="monospace" font-size="9" fill="#ebffde"
+          opacity="0.53">swap at each step</text>
+
+        <rect x="270" y="50" width="120" height="60" rx="8" fill="rgba(232,184,75,0.08)" />
+        <text x="330" y="79" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#E8B84B">update_gsa</text>
+        <text x="330" y="95" text-anchor="middle" font-family="monospace" font-size="8" fill="#E8B84B"
+          opacity="0.5">apply 4 rules</text>
+
+        <rect x="410" y="50" width="90" height="60" rx="8" fill="rgba(47,93,161,0.12)" />
+        <text x="455" y="79" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#7A9FD4">mask</text>
+        <text x="455" y="95" text-anchor="middle" font-family="monospace" font-size="8" fill="#7A9FD4" opacity="0.5">AND
+          walls</text>
+
+        <rect x="520" y="50" width="90" height="60" rx="8" fill="rgba(74,255,74,0.08)" />
+        <text x="565" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#4aff4a">draw_gsa</text>
+        <text x="565" y="91" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a" opacity="0.5">→
+          LEDs</text>
+
+        <rect x="630" y="40" width="90" height="80" rx="8" fill="rgba(74,255,74,0.15)" />
+        <text x="675" y="75" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#4aff4a">LED array</text>
+        <text x="675" y="91" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a"
+          opacity="0.5">10×12 pixels</text>
+        <text x="675" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#4aff4a"
+          opacity="0.35">0x50000000</text>
+
+        <line x1="240" y1="80" x2="268" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3"
+          marker-end="url(#arrg)" />
+        <line x1="390" y1="80" x2="408" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3"
+          marker-end="url(#arrg)" />
+        <line x1="500" y1="80" x2="518" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3"
+          marker-end="url(#arrg)" />
+        <line x1="610" y1="80" x2="628" y2="80" stroke="#4aff4a" stroke-width="1.2" opacity="0.3"
+          marker-end="url(#arrg)" />
+
+        <text x="0" y="148" font-family="monospace" font-size="9" fill="#ebffde">Torus topology - edges wrap: (x+12)%12,
+          (y+10)%10, implemented in assembly via rem instruction</text>
+      </svg>
+      <p class="diagram-caption" style="color:rgba(219, 248, 219, 0.927);">Game loop - GSA double-buffering → rules →
+        mask → draw</p>
     </div>
-  </div>
 
-  <!-- STATE MACHINE DIAGRAM -->
-  <div class="diagram-wrap">
-    <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
-      <defs>
-        <marker id="arrb" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill="rgba(92,61,30,0.35)"/>
-        </marker>
-      </defs>
-      <text x="300" y="20" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#5C3D1E">Game state machine, INIT → RAND → RUN</text>
+    <div class="divider"></div>
 
-      <!-- INIT -->
-      <circle cx="100" cy="110" r="44" fill="rgba(232,184,75,0.12)" stroke="#E8B84B" stroke-width="1.5" opacity="0.4"/>
-      <text x="100" y="106" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#9A6F00">INIT</text>
-      <text x="100" y="122" text-anchor="middle" font-family="monospace" font-size="9" fill="#9A6F00" opacity="0.6">pick seed</text>
+    <div class="content-block">
+      <p class="s-label">Challenges</p>
+      <h2 class="s-title">What made this project hard</h2>
 
-      <!-- RAND -->
-      <circle cx="300" cy="60" r="44" fill="rgba(47,93,161,0.1)" stroke="#2f5da1" stroke-width="1.5" opacity="0.4"/>
-      <text x="300" y="56" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#2f5da1">RAND</text>
-      <text x="300" y="72" text-anchor="middle" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.6">random seed</text>
-
-      <!-- RUN -->
-      <circle cx="500" cy="110" r="44" fill="rgba(74,255,74,0.06)" stroke="#4aff4a" stroke-width="1.5" opacity="0.3"/>
-      <text x="500" y="106" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#2d7a2d">RUN</text>
-      <text x="500" y="122" text-anchor="middle" font-family="monospace" font-size="9" fill="#2d7a2d" opacity="0.6">playing</text>
-
-      <!-- INIT → RAND (jc = N) -->
-      <path d="M135 85 Q220 30 256 52" stroke="#E8B84B" stroke-width="1.2" fill="none" opacity="0.3" marker-end="url(#arrb)"/>
-      <text x="185" y="42" font-family="monospace" font-size="9" fill="#9A6F00" opacity="0.5">jc=N times</text>
-
-      <!-- RAND → INIT (jr) -->
-      <path d="M256 68 Q220 100 144 112" stroke="#2f5da1" stroke-width="1.2" fill="none" opacity="0.25" stroke-dasharray="3" marker-end="url(#arrb)"/>
-
-      <!-- INIT → RUN -->
-      <path d="M138 122 Q320 175 456 122" stroke="#E8B84B" stroke-width="1.2" fill="none" opacity="0.3" marker-end="url(#arrb)"/>
-      <text x="295" y="175" font-family="monospace" font-size="9" fill="#9A6F00" opacity="0.4" text-anchor="middle">jr</text>
-
-      <!-- RAND → RUN -->
-      <path d="M340 76 Q430 60 456 88" stroke="#2f5da1" stroke-width="1.2" fill="none" opacity="0.3" marker-end="url(#arrb)"/>
-      <text x="412" y="60" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.5">jr</text>
-
-      <!-- RUN → INIT (jb reset) -->
-      <path d="M460 140 Q300 190 140 140" stroke="rgba(122,26,26,0.3)" stroke-width="1.2" fill="none" stroke-dasharray="3" marker-end="url(#arrb)"/>
-      <text x="300" y="195" font-family="monospace" font-size="9" fill="rgba(122,26,26,0.4)" text-anchor="middle">jb (reset)</text>
-    </svg>
-    <p class="diagram-caption">3-state FSM controlling game flow, implemented in assembly via switch-like branch sequences</p>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- TAKEAWAYS -->
-  <div class="content-block">
-    <p class="s-label">Takeaways</p>
-    <h2 class="s-title">What assembly gave me that Java never could</h2>
-    <div class="learned-grid">
-      <div class="learned-card">
-        <div class="learned-num">01</div>
-        <div class="learned-text">High-level languages are not magic, they are structured assembly. Every Python list, every Java method call, every JavaScript closure ultimately becomes sequences of load, store, branch, and jump instructions. Knowing this changes how you read code.</div>
-      </div>
-      <div class="learned-card">
-        <div class="learned-num">02</div>
-        <div class="learned-text">The stack is not invisible. In Java the JVM manages it silently. In assembly you push and pop manually, you decide what gets saved, and a single mistake corrupts the return address and crashes the program in a completely opaque way. After this project, stack frames are never abstract.</div>
-      </div>
-      <div class="learned-card">
-        <div class="learned-num">03</div>
-        <div class="learned-text">Bit manipulation is a real skill. Packing 5 fields into a 32-bit LED register, extracting a single cell from a GSA word with shifts and masks, things that seem trivial in high-level code require explicit bit arithmetic in assembly. It makes you think in binary.</div>
-      </div>
-      <div class="learned-card">
-        <div class="learned-num">04</div>
-        <div class="learned-text">Emergence is real. Four deterministic rules applied to 120 cells produce gliders, oscillators, still lifes, and chaos. Watching the patterns evolve on the LED grid, patterns that emerge from pure logic you wrote in assembly, is genuinely beautiful.</div>
+      <div class="challenge-list">
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅰ</div>
+          <div>
+            <div class="challenge-title">Thinking without abstractions</div>
+            <div class="challenge-desc">In Java, a variable is a name. In assembly, a variable is a register, and there
+              are only 32 of them, some with special roles you can't touch. Running out of registers mid-function means
+              spilling to the stack manually. Every simple operation requires a mental model of what's where at every
+              instruction. Coming from Java, this was the single hardest adjustment.</div>
+          </div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅱ</div>
+          <div>
+            <div class="challenge-title">Function calls and the stack</div>
+            <div class="challenge-desc">In Java, you call a method and it just works. In RISC-V assembly, you have to
+              manually save the return address (ra), save any registers you need to preserve across the call, call the
+              function, restore everything, then return. The calling convention, which registers are caller-saved vs
+              callee-saved, has to be respected exactly, or the program crashes in a completely unpredictable way. This
+              took many debugging sessions to internalize.</div>
+          </div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅲ</div>
+          <div>
+            <div class="challenge-title">Torus topology with modulo</div>
+            <div class="challenge-desc">The game grid wraps around, the cell at column 11 is adjacent to the cell at
+              column 0. In Java, this is one modulo operation. In assembly, handling negative results of modulo (-1 mod
+              12 should be 11, not -1) requires additional correction instructions. Every neighbour lookup involves
+              computing (x±1+12)%12 and (y±1+10)%10 correctly, for all 8 neighbours of every cell on a 120-cell grid.
+            </div>
+          </div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-icon">Ⅳ</div>
+          <div>
+            <div class="challenge-title">MMIO - writing to hardware through memory</div>
+            <div class="challenge-desc">To light up an LED, you don't call a function, you construct a 32-bit word with
+              the right bit pattern for column, row, color channel, and value, then store it at the right memory
+              address. Getting one LED wrong meant debugging the bit packing manually. The LED control register alone
+              has 5 distinct fields across 32 bits, and the draw_gsa procedure has to get every single one right for
+              each of the 120 cells.</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-</div>
+    <div class="content-block">
+      <p class="s-label">What was built</p>
+      <h2 class="s-title">20 assembly procedures from scratch</h2>
+      <div class="s-body">
+        <p>The full game required implementing 20 independent assembly procedures, each tested by an automated grader.
+          From low-level LED control to the full game loop with button handling and interrupt-driven input.</p>
+      </div>
 
-<div class="project-nav">
-  <a href="riscv.html" class="proj-nav-link">
-    <span class="proj-nav-label">← Previous</span>
-    <span class="proj-nav-name">RISC-V Processor</span>
-  </a>
-  <a href="projects.html" class="proj-nav-link" style="text-align:right;">
-    <span class="proj-nav-label">All projects</span>
-    <span class="proj-nav-name">Portfolio →</span>
-  </a>
-</div>
-
-<footer>
-  <div class="footer-top">
-    <span>© 2026</span>
-    <div class="footer-nav">
-      <a href="index.html">Home</a><span class="footer-dot">·</span>
-      <a href="projects.html">Project</a><span class="footer-dot">·</span>
-      <a href="about.html">About</a>
+      <div class="fn-grid">
+        <div class="fn-card">
+          <div class="fn-name">clear_leds</div>
+          <div class="fn-desc">Reset all 120 LEDs to off</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">set_pixel</div>
+          <div class="fn-desc">Light one LED at (x,y) in red</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">wait</div>
+          <div class="fn-desc">Variable delay based on game speed</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">get_gsa</div>
+          <div class="fn-desc">Read a row from active GSA</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">set_gsa</div>
+          <div class="fn-desc">Write a row to active GSA</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">draw_gsa</div>
+          <div class="fn-desc">Render full GSA to LED array</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">random_gsa</div>
+          <div class="fn-desc">Fill GSA with random cells</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">find_neighbours</div>
+          <div class="fn-desc">Count live neighbours of (x,y)</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">cell_fate</div>
+          <div class="fn-desc">Apply 4 GoL rules to one cell</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">update_gsa</div>
+          <div class="fn-desc">Compute next full game state</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">mask</div>
+          <div class="fn-desc">Apply wall mask, draw walls in blue</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">change_speed</div>
+          <div class="fn-desc">Inc/dec game speed 1–10</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">pause_game</div>
+          <div class="fn-desc">Toggle pause/resume</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">change_steps</div>
+          <div class="fn-desc">Set step count via buttons</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">increment_seed</div>
+          <div class="fn-desc">Cycle through seeds / random</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">update_state</div>
+          <div class="fn-desc">FSM: INIT → RAND → RUN</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">select_action</div>
+          <div class="fn-desc">Dispatch button events</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">get_input</div>
+          <div class="fn-desc">Read BUTTONS register</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">decrement_step</div>
+          <div class="fn-desc">Update 7-seg display</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">reset_game</div>
+          <div class="fn-desc">Full game reset to defaults</div>
+        </div>
+      </div>
     </div>
-    <span>Amandine Dejardin</span>
-  </div>
-  <div class="footer-blobs">
-    <div class="blob blob-yellow"></div>
-    <div class="blob blob-blue"></div>
-    <div class="blob blob-red"></div>
-  </div>
-</footer>
 
-<script>
-  // Cursor
-  const cursor = document.getElementById('cursor');
-  const follower = document.getElementById('follower');
-  let mx=0,my=0,fx=0,fy=0;
-  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
-  function animateCursor() {
-    cursor.style.left=mx+'px'; cursor.style.top=my+'px';
-    fx+=(mx-fx)*0.12; fy+=(my-fy)*0.12;
-    follower.style.left=fx+'px'; follower.style.top=fy+'px';
-    requestAnimationFrame(animateCursor);
-  }
-  animateCursor();
-  document.querySelectorAll('a,button').forEach(el => {
-    el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2)'; cursor.style.background='#E8B84B'; });
-    el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; cursor.style.background='#7A1A1A'; });
-  });
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <defs>
+          <marker id="arrb" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="rgba(92,61,30,0.35)" />
+          </marker>
+        </defs>
+        <text x="300" y="20" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700"
+          fill="#5C3D1E">Game state machine, INIT → RAND → RUN</text>
 
-  const grid = document.getElementById('heroGrid');
-  const cols = 24, rows = 12;
-  let cells = [];
-  // init random
-  for (let i = 0; i < rows * cols; i++) {
-    const div = document.createElement('div');
-    div.className = 'cell ' + (Math.random() > 0.65 ? 'alive' : 'dead');
-    grid.appendChild(div);
-    cells.push(div);
-  }
-  function idx(r, c) { return ((r + rows) % rows) * cols + ((c + cols) % cols); }
-  function step() {
-    const next = cells.map((_, i) => {
-      const r = Math.floor(i / cols), c = i % cols;
-      let n = 0;
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        if (cells[idx(r+dr, c+dc)].classList.contains('alive')) n++;
-      }
-      const alive = cells[i].classList.contains('alive');
-      return alive ? (n === 2 || n === 3) : (n === 3);
+        <circle cx="100" cy="110" r="44" fill="rgba(232,184,75,0.12)" stroke="#E8B84B" stroke-width="1.5"
+          opacity="0.4" />
+        <text x="100" y="106" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700"
+          fill="#9A6F00">INIT</text>
+        <text x="100" y="122" text-anchor="middle" font-family="monospace" font-size="9" fill="#9A6F00"
+          opacity="0.6">pick seed</text>
+
+        <circle cx="300" cy="60" r="44" fill="rgba(47,93,161,0.1)" stroke="#2f5da1" stroke-width="1.5" opacity="0.4" />
+        <text x="300" y="56" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700"
+          fill="#2f5da1">RAND</text>
+        <text x="300" y="72" text-anchor="middle" font-family="monospace" font-size="9" fill="#2f5da1"
+          opacity="0.6">random seed</text>
+
+        <circle cx="500" cy="110" r="44" fill="rgba(74,255,74,0.06)" stroke="#4aff4a" stroke-width="1.5"
+          opacity="0.3" />
+        <text x="500" y="106" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700"
+          fill="#2d7a2d">RUN</text>
+        <text x="500" y="122" text-anchor="middle" font-family="monospace" font-size="9" fill="#2d7a2d"
+          opacity="0.6">playing</text>
+
+        <path d="M135 85 Q220 30 256 52" stroke="#E8B84B" stroke-width="1.2" fill="none" opacity="0.3"
+          marker-end="url(#arrb)" />
+        <text x="185" y="42" font-family="monospace" font-size="9" fill="#9A6F00" opacity="0.5">jc=N times</text>
+
+        <path d="M256 68 Q220 100 144 112" stroke="#2f5da1" stroke-width="1.2" fill="none" opacity="0.25"
+          stroke-dasharray="3" marker-end="url(#arrb)" />
+
+        <path d="M138 122 Q320 175 456 122" stroke="#E8B84B" stroke-width="1.2" fill="none" opacity="0.3"
+          marker-end="url(#arrb)" />
+        <text x="295" y="175" font-family="monospace" font-size="9" fill="#9A6F00" opacity="0.4"
+          text-anchor="middle">jr</text>
+
+        <path d="M340 76 Q430 60 456 88" stroke="#2f5da1" stroke-width="1.2" fill="none" opacity="0.3"
+          marker-end="url(#arrb)" />
+        <text x="412" y="60" font-family="monospace" font-size="9" fill="#2f5da1" opacity="0.5">jr</text>
+
+        <path d="M460 140 Q300 190 140 140" stroke="rgba(122,26,26,0.3)" stroke-width="1.2" fill="none"
+          stroke-dasharray="3" marker-end="url(#arrb)" />
+        <text x="300" y="195" font-family="monospace" font-size="9" fill="rgba(122,26,26,0.4)" text-anchor="middle">jb
+          (reset)</text>
+      </svg>
+      <p class="diagram-caption">3-state FSM controlling game flow, implemented in assembly via switch-like branch
+        sequences</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content-block">
+      <p class="s-label">Takeaways</p>
+      <h2 class="s-title">What assembly gave me that Java never could</h2>
+      <div class="learned-grid">
+        <div class="learned-card">
+          <div class="learned-num">01</div>
+          <div class="learned-text">High-level languages are not magic, they are structured assembly. Every Python list,
+            every Java method call, every JavaScript closure ultimately becomes sequences of load, store, branch, and
+            jump instructions. Knowing this changes how you read code.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">02</div>
+          <div class="learned-text">The stack is not invisible. In Java the JVM manages it silently. In assembly you
+            push and pop manually, you decide what gets saved, and a single mistake corrupts the return address and
+            crashes the program in a completely opaque way. After this project, stack frames are never abstract.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">03</div>
+          <div class="learned-text">Bit manipulation is a real skill. Packing 5 fields into a 32-bit LED register,
+            extracting a single cell from a GSA word with shifts and masks, things that seem trivial in high-level code
+            require explicit bit arithmetic in assembly. It makes you think in binary.</div>
+        </div>
+        <div class="learned-card">
+          <div class="learned-num">04</div>
+          <div class="learned-text">Emergence is real. Four deterministic rules applied to 120 cells produce gliders,
+            oscillators, still lifes, and chaos. Watching the patterns evolve on the LED grid, patterns that emerge from
+            pure logic you wrote in assembly, is genuinely beautiful.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="project-nav">
+    <a href="riscv.html" class="proj-nav-link">
+      <span class="proj-nav-label">← Previous</span>
+      <span class="proj-nav-name">RISC-V Processor</span>
+    </a>
+    <a href="plotter.html" class="proj-nav-link" style="text-align:right;">
+      <span class="proj-nav-label">Next →</span>
+      <span class="proj-nav-name">Plotter</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="footer-top">
+      <span>© 2026</span>
+      <div class="footer-nav">
+        <a href="index.html">Home</a><span class="footer-dot">·</span>
+        <a href="projects.html">Project</a><span class="footer-dot">·</span>
+        <a href="about.html">About</a>
+      </div>
+      <span>Amandine Dejardin</span>
+    </div>
+    <div class="footer-blobs">
+      <div class="blob blob-yellow"></div>
+      <div class="blob blob-blue"></div>
+      <div class="blob blob-red"></div>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+      fx += (mx - fx) * 0.12; fy += (my - fy) * 0.12;
+      follower.style.left = fx + 'px'; follower.style.top = fy + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    document.querySelectorAll('a,button').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2)'; cursor.style.background = '#E8B84B'; });
+      el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; cursor.style.background = '#7A1A1A'; });
     });
-    next.forEach((a, i) => { cells[i].className = 'cell ' + (a ? 'alive' : 'dead'); });
-  }
-  setInterval(step, 300);
 
-  // Scroll reveal
-  const blocks = document.querySelectorAll('.content-block, .diagram-wrap');
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
-  }, { threshold: 0.08 });
-  blocks.forEach(b => obs.observe(b));
-</script>
+    const grid = document.getElementById('heroGrid');
+    const cols = 24, rows = 12;
+    let cells = [];
+    // init random
+    for (let i = 0; i < rows * cols; i++) {
+      const div = document.createElement('div');
+      div.className = 'cell ' + (Math.random() > 0.65 ? 'alive' : 'dead');
+      grid.appendChild(div);
+      cells.push(div);
+    }
+    function idx(r, c) { return ((r + rows) % rows) * cols + ((c + cols) % cols); }
+    function step() {
+      const next = cells.map((_, i) => {
+        const r = Math.floor(i / cols), c = i % cols;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          if (cells[idx(r + dr, c + dc)].classList.contains('alive')) n++;
+        }
+        const alive = cells[i].classList.contains('alive');
+        return alive ? (n === 2 || n === 3) : (n === 3);
+      });
+      next.forEach((a, i) => { cells[i].className = 'cell ' + (a ? 'alive' : 'dead'); });
+    }
+    setInterval(step, 300);
+
+    const blocks = document.querySelectorAll('.content-block, .diagram-wrap');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    blocks.forEach(b => obs.observe(b));
+  </script>
 </body>
+
 </html>

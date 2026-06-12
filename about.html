@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Amandine Dejardin</title>
+  <link
+    href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700,800&f[]=gambetta@400,500&f[]=zodiak@400&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bordeaux: #7A1A1A;
+      --jaune: #E8B84B;
+      --bleu: #2f5da1;
+      --creme: #F5F0E8;
+      --brun: #5C3D1E;
+      --blanc: #ffffff;
+      --noir: #1A1008;
+      --orange: #C8431A;
+      --rose: rgba(244, 210, 230, 0.30);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Satoshi', system-ui, sans-serif;
+      background: var(--blanc);
+      color: var(--noir);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    a,
+    button {
+      cursor: none;
+    }
+
+    .cursor {
+      width: 12px;
+      height: 12px;
+      background: var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease, background 0.2s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .cursor-follower {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--bordeaux);
+      border-radius: 50%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.35s ease, border-color 0.2s ease;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    nav {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      gap: 0;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeDown 0.6s 0.8s forwards;
+    }
+
+    .nav-btn {
+      font-family: 'Satoshi', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-4px) scale(1.04);
+      filter: brightness(0.95);
+    }
+
+    .nav-home {
+      width: 110px;
+      height: 90px;
+      background: #f7ce53;
+      mask-image: url("shapes/home-shape.svg");
+      -webkit-mask-image: url("shapes/home-shape.svg");
+      color: var(--bleu);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+    }
+
+    .nav-project {
+      width: 95px;
+      height: 90px;
+      background: var(--bleu);
+      color: var(--blanc);
+      border-radius: 8px;
+    }
+
+    .nav-about {
+      width: 95px;
+      height: 90px;
+      background: var(--bordeaux);
+      color: var(--creme);
+      border-radius: 50%;
+    }
+
+    .about-hero {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(232, 184, 75, 0.28), transparent 28%),
+        radial-gradient(circle at 78% 70%, rgba(47, 93, 161, 0.16), transparent 32%),
+        var(--creme);
+      padding: 110px 48px 56px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(92, 61, 30, 0.55);
+      margin-bottom: 18px;
+      opacity: 0;
+      transform: translateY(24px);
+      animation: slideUp 0.7s 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .about-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(64px, 10vw, 144px);
+      font-weight: 800;
+      letter-spacing: -5px;
+      line-height: 0.88;
+      color: var(--bordeaux);
+      max-width: 1080px;
+      opacity: 0;
+      transform: translateY(60px);
+      animation: slideUp 0.9s 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .about-title .accent {
+      color: var(--bleu);
+    }
+
+    .about-title .star {
+      display: inline-block;
+      color: var(--jaune);
+      animation: spin 9s linear infinite;
+    }
+
+    .hero-bottom {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 36px;
+      align-items: end;
+      margin-top: 70px;
+    }
+
+    .intro-card {
+      background: rgba(255, 255, 255, 0.62);
+      border: 1.5px solid rgba(92, 61, 30, 0.10);
+      border-radius: 28px;
+      padding: 30px;
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideUp 0.7s 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .intro-card p {
+      font-family: 'zodiak', serif;
+      font-size: clamp(20px, 2.2vw, 32px);
+      line-height: 1.35;
+      color: var(--brun);
+    }
+
+    .intro-card strong {
+      color: var(--bordeaux);
+      font-weight: 600;
+    }
+
+    .mini-profile {
+      display: grid;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideUp 0.7s 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .profile-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.14);
+    }
+
+    .profile-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(92, 61, 30, 0.45);
+    }
+
+    .profile-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brun);
+      text-align: right;
+    }
+
+    .floating-word {
+      position: absolute;
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(36px, 7vw, 92px);
+      font-weight: 800;
+      color: rgba(122, 26, 26, 0.055);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .fw-1 {
+      top: 18%;
+      right: -20px;
+      transform: rotate(-8deg);
+    }
+
+    .fw-2 {
+      bottom: 18%;
+      left: -18px;
+      transform: rotate(6deg);
+    }
+
+    section {
+      position: relative;
+    }
+
+    .section-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 96px 48px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(92, 61, 30, 0.48);
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(34px, 5vw, 72px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -2px;
+      color: var(--bordeaux);
+      margin-bottom: 34px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(42px);
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .manifesto-section {
+      background: var(--blanc);
+    }
+
+    .manifesto-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+    }
+
+    .manifesto-card {
+      min-height: 310px;
+      padding: 28px;
+      background: var(--creme);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.35s ease, border-radius 0.35s ease, background 0.35s ease;
+    }
+
+    .manifesto-card:hover {
+      transform: translateY(-8px);
+      border-radius: 28px;
+      background: rgba(244, 210, 230, 0.42);
+    }
+
+    .manifesto-num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      color: rgba(122, 26, 26, 0.24);
+    }
+
+    .manifesto-card h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 26px;
+      line-height: 1;
+      color: var(--brun);
+      margin-bottom: 14px;
+    }
+
+    .manifesto-card p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.65);
+    }
+
+    .split-section {
+      background: rgb(83, 7, 38);
+      color: var(--blanc);
+      overflow: hidden;
+    }
+
+    .split-section .section-label {
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+    .split-section .section-title {
+      color: var(--blanc);
+      margin-bottom: 0;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 56px;
+      align-items: center;
+    }
+
+    .creative-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .creative-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .creative-row span {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+    .creative-row p {
+      font-size: 18px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .sound-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 160px;
+      margin-top: 36px;
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 100px 100px 0 0;
+      background: var(--jaune);
+      opacity: 0.88;
+      animation: sound 1.4s ease-in-out infinite alternate;
+    }
+
+    .bar:nth-child(2) {
+      animation-delay: .15s;
+      background: var(--bleu);
+    }
+
+    .bar:nth-child(3) {
+      animation-delay: .3s;
+      background: var(--orange);
+    }
+
+    .bar:nth-child(4) {
+      animation-delay: .45s;
+      background: var(--creme);
+    }
+
+    .bar:nth-child(5) {
+      animation-delay: .6s;
+      background: var(--jaune);
+    }
+
+    .bar:nth-child(6) {
+      animation-delay: .75s;
+      background: var(--bleu);
+    }
+
+    .bar:nth-child(7) {
+      animation-delay: .9s;
+      background: var(--orange);
+    }
+
+    .timeline-section {
+      background: var(--creme);
+    }
+
+    .timeline {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid rgba(92, 61, 30, 0.12);
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 34px;
+      padding: 30px 0;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.12);
+    }
+
+    .timeline-date {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: rgba(122, 26, 26, 0.55);
+    }
+
+    .timeline-content h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 24px;
+      color: var(--brun);
+      margin-bottom: 8px;
+    }
+
+    .timeline-content p {
+      font-size: 15px;
+      line-height: 1.72;
+      color: rgba(26, 16, 8, 0.64);
+      max-width: 760px;
+    }
+
+    .values-section {
+      background: var(--blanc);
+    }
+
+    .values-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .value-card {
+      border: 1.5px solid rgba(92, 61, 30, 0.11);
+      border-radius: 26px;
+      padding: 30px;
+      min-height: 235px;
+      position: relative;
+      overflow: hidden;
+      background: var(--blanc);
+    }
+
+    .value-card::after {
+      content: '';
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      right: -30px;
+      bottom: -30px;
+      background: rgba(232, 184, 75, 0.25);
+      transition: transform 0.35s ease;
+    }
+
+    .value-card:hover::after {
+      transform: scale(1.6);
+    }
+
+    .value-card h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      color: var(--bordeaux);
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .value-card p {
+      font-size: 15px;
+      line-height: 1.72;
+      color: rgba(26, 16, 8, 0.64);
+      position: relative;
+      z-index: 1;
+    }
+
+    .terminal-section {
+      background: var(--noir);
+      color: var(--creme);
+    }
+
+    .terminal-section .section-label {
+      color: rgba(245, 240, 232, 0.36);
+    }
+
+    .terminal-section .section-title {
+      color: var(--creme);
+    }
+
+    .terminal-box {
+      background: #0c0704;
+      border: 1px solid rgba(245, 240, 232, 0.14);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .terminal-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(245, 240, 232, 0.10);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
+
+    .dot:nth-child(2) {
+      background: var(--jaune);
+    }
+
+    .dot:nth-child(3) {
+      background: var(--bleu);
+    }
+
+    .terminal-title {
+      margin-left: 10px;
+      font-size: 12px;
+      color: rgba(245, 240, 232, 0.5);
+      font-family: monospace;
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-family: 'Courier New', monospace;
+      min-height: 260px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .terminal-line {
+      color: rgba(245, 240, 232, 0.78);
+    }
+
+    .terminal-line .prompt {
+      color: var(--jaune);
+    }
+
+    .terminal-output {
+      color: rgba(245, 240, 232, 0.58);
+      margin: 6px 0 16px 0;
+    }
+
+    .terminal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .terminal-btn {
+      background: transparent;
+      border: 1px solid rgba(245, 240, 232, 0.22);
+      color: var(--creme);
+      border-radius: 100px;
+      padding: 9px 13px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+
+    .terminal-btn:hover {
+      background: var(--jaune);
+      color: var(--noir);
+      transform: translateY(-3px);
+    }
+
+    .blink {
+      animation: blink 1s steps(2, start) infinite;
+    }
+
+    .cta-section {
+      background: var(--creme);
+      text-align: center;
+    }
+
+    .cta-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(44px, 7vw, 96px);
+      color: var(--bordeaux);
+      line-height: .9;
+      letter-spacing: -3px;
+      margin-bottom: 24px;
+    }
+
+    .cta-text {
+      max-width: 650px;
+      margin: 0 auto 34px;
+      font-size: 18px;
+      line-height: 1.7;
+      color: rgba(26, 16, 8, 0.65);
+    }
+
+    .cta-btn {
+      display: inline-block;
+      padding: 18px 52px;
+      font-size: 16px;
+      font-weight: 800;
+      text-decoration: none;
+      border: 2.5px solid var(--bordeaux);
+      color: var(--bordeaux);
+      border-radius: 100px;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.35s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .cta-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--bordeaux);
+      transform: translateY(101%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 100px;
+      z-index: -1;
+    }
+
+    .cta-btn:hover {
+      color: var(--blanc);
+    }
+
+    .cta-btn:hover::before {
+      transform: translateY(0);
+    }
+
+    footer {
+      background: rgba(244, 210, 230, 0.18);
+      padding: 32px 48px 0;
+      font-family: 'zodiak', serif;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 28px;
+      border-bottom: 1px solid rgba(92, 61, 30, 0.12);
+      font-size: 14px;
+      color: var(--brun);
+      font-weight: 500;
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .footer-nav a {
+      color: var(--brun);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-nav a:hover {
+      color: var(--bordeaux);
+    }
+
+    .footer-dot {
+      opacity: 0.4;
+    }
+
+    .footer-blobs {
+      display: flex;
+      align-items: flex-end;
+      height: 120px;
+      overflow: hidden;
+    }
+
+    .blob {
+      height: 105px;
+      flex-shrink: 0;
+    }
+
+    .blob-yellow {
+      width: 34%;
+      background: var(--jaune);
+      border-radius: 70px 70px 0 0;
+    }
+
+    .blob-blue {
+      width: 34%;
+      background: var(--bleu);
+      border-radius: 0;
+    }
+
+    .blob-red {
+      width: 32%;
+      background: var(--orange);
+      border-radius: 50% 50% 0 0;
+    }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeDown {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes sound {
+      from {
+        height: 28%;
+      }
+
+      to {
+        height: 100%;
+      }
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        cursor: auto;
+      }
+
+      a,
+      button {
+        cursor: pointer;
+      }
+
+      .cursor,
+      .cursor-follower {
+        display: none;
+      }
+
+      nav {
+        transform: scale(0.82);
+        transform-origin: top right;
+      }
+
+      .about-hero {
+        padding: 120px 24px 42px;
+      }
+
+      .hero-bottom,
+      .split-grid,
+      .values-wrap,
+      .manifesto-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-inner {
+        padding: 76px 24px;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .creative-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .footer-top {
+        flex-direction: column;
+        gap: 14px;
+      }
+    }
+
+    /* TERMINAL */
+
+    .terminal-section {
+      padding: 120px 48px;
+    }
+
+    .terminal-window {
+      max-width: 900px;
+      margin: auto;
+      background: #110a02;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.12);
+    }
+
+    .terminal-header {
+      height: 46px;
+      background: #1f140a;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .red {
+      background: #ff5f56;
+    }
+
+    .yellow {
+      background: #ffbd2e;
+    }
+
+    .green {
+      background: #27c93f;
+    }
+
+    .terminal-title {
+      margin-left: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .terminal-body {
+      padding: 24px;
+      min-height: 350px;
+      font-family: monospace;
+      color: white;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .terminal-line {
+      margin-bottom: 10px;
+    }
+
+    .prompt {
+      color: #E8B84B;
+      margin-right: 12px;
+    }
+
+    .highlight {
+      color: #E8B84B;
+    }
+
+    .terminal-input-line {
+      display: flex;
+      align-items: center;
+      padding: 0 24px 24px;
+    }
+
+    #terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-family: monospace;
+      font-size: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="follower"></div>
+
+  <nav>
+    <a href="index.html" class="nav-btn nav-home">Home</a>
+    <a href="projects.html" class="nav-btn nav-project">Project</a>
+    <a href="about.html" class="nav-btn nav-about">About</a>
+  </nav>
+
+  <header class="about-hero">
+
+    <div>
+      <p class="hero-kicker">About me · EPFL Computer Science Student</p>
+      <h1 class="about-title">
+        Beyond<br>
+        <span class="accent">code<span class="star">✦</span> </span><br>
+      </h1>
+    </div>
+
+    <div class="hero-bottom">
+      <div class="intro-card">
+        <p>
+          I am a computer science student at EPFL, drawn to projects where code becomes something concrete:
+          a robot that draws, a compiler that translates ideas, a system that connects machines, or an interface that
+          feels alive.
+          I like clean engineering, but I also care about the small creative details that make a project memorable.
+        </p>
+      </div>
+
+      <div class="mini-profile">
+        <div class="profile-line">
+          <span class="profile-label">Currently</span>
+          <span class="profile-value">Computer Science @ EPFL</span>
+        </div>
+        <div class="profile-line">
+          <span class="profile-label">Looking for</span>
+          <span class="profile-value">Cybersecurity / software opportunities</span>
+        </div>
+        <div class="profile-line">
+          <span class="profile-label">I enjoy</span>
+          <span class="profile-value">Debugging, design, hardware, music</span>
+        </div>
+        <div class="profile-line">
+          <span class="profile-label">Personality</span>
+          <span class="profile-value">Creative, curious, hands-on</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="manifesto-section">
+    <div class="section-inner reveal">
+      <p class="section-label">How I work</p>
+      <h2 class="section-title">A mix of precision, curiosity and iteration.</h2>
+
+      <div class="manifesto-grid">
+        <article class="manifesto-card">
+          <div class="manifesto-num">01</div>
+          <div>
+            <h3>I build to understand.</h3>
+            <p>I learn best by turning theory into something tangible: a working prototype, a system, a visual, a tool,
+              or a full project from scratch.</p>
+          </div>
+        </article>
+
+        <article class="manifesto-card">
+          <div class="manifesto-num">02</div>
+          <div>
+            <h3>I like hard debugging.</h3>
+            <p>I enjoy problems where the answer is not obvious at first: tracing behaviour, testing hypotheses, and
+              slowly making the system clearer.</p>
+          </div>
+        </article>
+
+        <article class="manifesto-card">
+          <div class="manifesto-num">03</div>
+          <div>
+            <h3>I care about the finish.</h3>
+            <p>For me, good work is not only functional. It should be readable, intentional, well-presented, and
+              pleasant to use or explore.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="split-section">
+    <div class="section-inner split-grid reveal">
+      <div>
+        <p class="section-label">Beyond computer science</p>
+        <h2 class="section-title">Creative by default.</h2>
+        <div class="sound-bars" aria-hidden="true">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+      </div>
+
+      <div class="creative-stack">
+        <div class="creative-row">
+          <span>Design</span>
+          <p>I draw, I like beautiful objects, and I enjoy shaping a visual identity through typography, rhythm, spacing
+            and colour.</p>
+        </div>
+        <div class="creative-row">
+          <span>Music</span>
+          <p>I play electric guitar. It is another way of building something precise, expressive and slightly imperfect
+            in the best possible way.</p>
+        </div>
+        <div class="creative-row">
+          <span>Reading</span>
+          <p>I like reading because it gives me distance, new ideas, and a different kind of focus than coding.</p>
+        </div>
+        <div class="creative-row">
+          <span>Mindset</span>
+          <p>I am a touche-à-tout: I like exploring new tools, learning fast, and connecting technical skills with
+            creative intuition.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="timeline-section">
+    <div class="section-inner reveal">
+      <p class="section-label">Path</p>
+      <h2 class="section-title">The thread through my projects.</h2>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">01</div>
+          <div class="timeline-content">
+            <h3>Learning the fundamentals</h3>
+            <p>At EPFL, I built a strong foundation in computer science: algorithms, systems, computer architecture,
+              networking, programming languages and parallel computing.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">02</div>
+          <div class="timeline-content">
+            <h3>Turning courses into real projects</h3>
+            <p>I worked on projects such as a distributed key-value store, a compiler backend, GPU optimizations,
+              hardware-oriented systems, and a 2D plotter combining mechanics and embedded software.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">03</div>
+          <div class="timeline-content">
+            <h3>Moving toward cybersecurity</h3>
+            <p>I am especially interested in cybersecurity because it combines technical depth, system-level thinking,
+              investigation, and the need to understand how things fail in order to make them stronger.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="values-section">
+    <div class="section-inner reveal">
+      <p class="section-label">What I bring</p>
+      <h2 class="section-title">Reliable in a team, curious on my own.</h2>
+
+      <div class="values-wrap">
+        <article class="value-card">
+          <h3>Collaboration</h3>
+          <p>I like working with people who explain, challenge and improve ideas. I value clear communication, shared
+            ownership and constructive feedback.</p>
+        </article>
+
+        <article class="value-card">
+          <h3>Problem solving</h3>
+          <p>I am motivated by complex problems: understanding the constraints, isolating what matters, and finding a
+            clean solution step by step.</p>
+        </article>
+
+        <article class="value-card">
+          <h3>Hands-on engineering</h3>
+          <p>I enjoy projects where I can build the full chain: design, implement, test, calibrate, debug and polish
+            until the result actually works.</p>
+        </article>
+
+        <article class="value-card">
+          <h3>Continuous learning</h3>
+          <p>New technologies do not intimidate me. I like exploring unfamiliar tools and turning them into something
+            useful, understandable and concrete.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="terminal-section reveal">
+    <div class="terminal-window">
+
+      <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">amandine@portfolio:~</span>
+      </div>
+
+      <div class="terminal-body" id="terminal-output">
+
+        <div class="terminal-line">
+          Welcome. Type <span class="highlight">help</span> to explore.
+        </div>
+
+      </div>
+
+      <div class="terminal-input-line">
+        <span class="prompt">></span>
+        <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
+      </div>
+
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="section-inner reveal">
+      <h2 class="cta-title">Let’s connect !</h2>
+      <p class="cta-text">I am always interested in projects that combine technical depth, concrete impact and a bit of
+        personality.</p>
+      <a href="mailto:amandine.dejardin@epfl.ch" class="cta-btn">Contact me →</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-top">
+      <span>© 2026</span>
+      <div class="footer-nav">
+        <a href="index.html">Home</a>
+        <span class="footer-dot">·</span>
+        <a href="projects.html">Project</a>
+        <span class="footer-dot">·</span>
+        <a href="about.html">About</a>
+      </div>
+      <span>Amandine Dejardin</span>
+    </div>
+    <div class="footer-blobs">
+      <div class="blob blob-yellow"></div>
+      <div class="blob blob-blue"></div>
+      <div class="blob blob-red"></div>
+    </div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const follower = document.getElementById('follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX;
+      my = e.clientY;
+    });
+
+    function animateCursor() {
+      cursor.style.left = mx + 'px';
+      cursor.style.top = my + 'px';
+      fx += (mx - fx) * 0.12;
+      fy += (my - fy) * 0.12;
+      follower.style.left = fx + 'px';
+      follower.style.top = fy + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+
+    animateCursor();
+
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+        cursor.style.background = '#E8B84B';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+        cursor.style.background = '#7A1A1A';
+      });
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 70);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    reveals.forEach(r => observer.observe(r));
+
+    // Mini terminal easter egg
+    const terminalBody = document.getElementById('terminalBody');
+    const terminalResponses = {
+      skills: 'Python · Java · C/C++ · Scala · SQL · CUDA · OpenMP · RISC-V Assembly · systems thinking',
+      hobbies: 'Electric guitar · drawing · reading · visual design · discovering new tools just because they look interesting',
+      funfact: 'This portfolio has a hidden rule: every page needs at least one small detail that makes it feel alive.',
+      clear: ''
+    };
+
+    document.querySelectorAll('.terminal-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const command = btn.dataset.command;
+
+        if (command === 'clear') {
+          terminalBody.innerHTML = `
+            <div class="terminal-line"><span class="prompt">$</span> terminal cleared</div>
+            <div class="terminal-output">Try another command.</div>
+            <div class="terminal-actions">
+              <button class="terminal-btn" data-command="skills">skills</button>
+              <button class="terminal-btn" data-command="hobbies">hobbies</button>
+              <button class="terminal-btn" data-command="funfact">funfact</button>
+              <button class="terminal-btn" data-command="clear">clear</button>
+            </div>`;
+          rebindTerminalButtons();
+          return;
+        }
+
+        const line = document.createElement('div');
+        line.className = 'terminal-line';
+        line.innerHTML = `<span class="prompt">$</span> ${command}`;
+
+        const output = document.createElement('div');
+        output.className = 'terminal-output';
+        output.textContent = terminalResponses[command];
+
+        const actions = terminalBody.querySelector('.terminal-actions');
+        terminalBody.insertBefore(line, actions);
+        terminalBody.insertBefore(output, actions);
+      });
+    });
+
+    function rebindTerminalButtons() {
+      document.querySelectorAll('.terminal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const command = btn.dataset.command;
+          if (command === 'clear') {
+            location.reload();
+            return;
+          }
+          const line = document.createElement('div');
+          line.className = 'terminal-line';
+          line.innerHTML = `<span class="prompt">$</span> ${command}`;
+          const output = document.createElement('div');
+          output.className = 'terminal-output';
+          output.textContent = terminalResponses[command];
+          const actions = terminalBody.querySelector('.terminal-actions');
+          terminalBody.insertBefore(line, actions);
+          terminalBody.insertBefore(output, actions);
+        });
+      });
+    }
+
+    const input = document.getElementById("terminal-input");
+    const output = document.getElementById("terminal-output");
+
+    const commands = {
+      help: `Available commands: about, skills, projects, future, whoami, clear, contact`,
+
+      about: `EPFL Computer Science student. I enjoy building projects that combine software, hardware and design.`,
+
+      skills: `C · C++ · Python · Java · CUDA · Scala · Assembly`,
+
+      projects: `SLAMCar · DKVS · Amy Compiler · GPU Optimization · 2D Plotter  · click on project to see more details`,
+
+      future: `Currently moving toward cybersecurity, with an interest in systems, infrastructure and security engineering.`,
+
+      whoami: `Creative engineer. Problem solver. Builder. Continuous learner.`,
+
+      secret: 'you found the easter egg ;)',
+
+      contact: 'mail : amandinedejardin@epfl.ch'
+
+    };
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+
+      const cmd = input.value.trim().toLowerCase();
+
+      output.innerHTML += `
+    <div class="terminal-line">
+      <span class="prompt">></span>${cmd}
+    </div>
+  `;
+
+      if (cmd === "clear") {
+        output.innerHTML = "";
+      } else if (commands[cmd]) {
+        output.innerHTML += `
+      <div class="terminal-line">${commands[cmd]}</div>
+    `;
+      } else {
+        output.innerHTML += `
+      <div class="terminal-line">
+        Command not found. Type <span class="highlight">help</span>.
+      </div>
+    `;
+      }
+
+      input.value = "";
+      output.scrollTop = output.scrollHeight;
+    });
+
+  </script>
+</body>
+
+</html>
