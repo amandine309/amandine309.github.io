@@ -584,6 +584,118 @@
         opacity: 1;
       }
     }
+
+    @media (max-width: 768px) {
+
+      body {
+        cursor: auto;
+        overflow-x: hidden;
+      }
+
+      .cursor,
+      .cursor-follower {
+        display: none;
+      }
+
+      a,
+      button,
+      .btn-view {
+        cursor: pointer;
+      }
+
+      nav {
+        top: 10px;
+        right: 8px;
+        transform: scale(0.72);
+        transform-origin: top right;
+      }
+
+      .page-header {
+        padding: 115px 22px 40px;
+      }
+
+      .page-title {
+        font-size: clamp(52px, 16vw, 90px);
+        letter-spacing: -2px;
+      }
+
+      .header-line {
+        margin-top: 28px;
+      }
+
+      .projects-list {
+        padding: 0 22px 60px;
+      }
+
+      .project-row {
+        grid-template-columns: 1fr;
+        padding: 32px 0;
+        gap: 20px;
+      }
+
+      .project-row:nth-child(even) .project-info,
+      .project-row:nth-child(odd) .project-info {
+        order: 2;
+        padding: 0;
+      }
+
+      .project-row:nth-child(even) .project-thumb,
+      .project-row:nth-child(odd) .project-thumb {
+        order: 1;
+      }
+
+      .project-info {
+        padding: 0;
+      }
+
+      .project-name {
+        font-size: 28px;
+      }
+
+      .project-desc {
+        max-width: 100%;
+        font-size: 14px;
+      }
+
+      .project-thumb {
+        aspect-ratio: 16 / 10;
+      }
+
+      .coming-section {
+        padding: 60px 22px;
+      }
+
+      .coming-header {
+        margin-bottom: 24px;
+      }
+
+      .coming-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .coming-card {
+        padding: 22px;
+      }
+
+      footer {
+        padding: 28px 22px 0;
+      }
+
+      .footer-top {
+        flex-direction: column;
+        gap: 14px;
+        text-align: center;
+      }
+
+      .footer-blobs {
+        height: 90px;
+      }
+
+      .blob {
+        height: 80px;
+      }
+    }
+    
   </style>
 </head>
 
@@ -709,7 +821,8 @@
           <span class="tag tag-bleu">RISC V</span>
           <span class="tag tag-brun">MMIO</span>
         </div>
-        <p class="project-desc">Conway's Game of Life, built from scratch in RISC-V assembly on an FPGA with LED display and button controls.
+        <p class="project-desc">Conway's Game of Life, built from scratch in RISC-V assembly on an FPGA with LED display
+          and button controls.
         </p>
         <a href="gameoflife.html" class="btn-view">View more details <span class="btn-arrow">→</span></a>
       </div>

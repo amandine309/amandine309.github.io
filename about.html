@@ -935,6 +935,30 @@
       font-family: monospace;
       font-size: 15px;
     }
+
+    @media (max-width: 768px) {
+
+      .hero-bottom,
+      .split-grid,
+      .values-wrap,
+      .manifesto-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .about-title {
+        font-size: clamp(48px, 16vw, 80px);
+      }
+
+      .section-inner {
+        padding: 60px 20px;
+      }
+
+      nav {
+        transform: scale(0.75);
+        transform-origin: top right;
+      }
+
+    }
   </style>
 </head>
 

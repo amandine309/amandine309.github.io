@@ -641,6 +641,156 @@
       opacity: 1;
       transform: translateY(0);
     }
+
+
+    @media (max-width: 768px) {
+
+      body {
+        cursor: auto;
+        overflow-x: hidden;
+      }
+
+      .cursor,
+      .cursor-follower {
+        display: none;
+      }
+
+      a,
+      button,
+      .project-card,
+      .skill-item,
+      .btn-view-all {
+        cursor: pointer;
+      }
+
+      nav {
+        top: 10px;
+        right: 8px;
+        transform: scale(0.72);
+        transform-origin: top right;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-text-area {
+        padding: 115px 22px 0;
+      }
+
+      .hero-name {
+        font-size: clamp(54px, 18vw, 82px);
+        letter-spacing: -2px;
+        margin-bottom: 8px;
+      }
+
+      .hero-name .line2 {
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .star {
+        font-size: clamp(38px, 12vw, 58px);
+      }
+
+      .hero-meta {
+        justify-content: flex-start;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 24px;
+      }
+
+      .hero-meta p {
+        font-size: 14px;
+      }
+
+      .scroll-hint {
+        font-size: 12px;
+      }
+
+      .scroll-hint::before {
+        height: 22px;
+      }
+
+      .video-section video {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .projects-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-card {
+        aspect-ratio: 4 / 3;
+      }
+
+      .project-overlay {
+        opacity: 1;
+        padding: 20px;
+        background: linear-gradient(to top, rgba(92, 61, 30, 0.72), transparent 60%);
+      }
+
+      .project-name {
+        transform: none;
+        font-size: 18px;
+      }
+
+      .btn-wrap {
+        margin: 28px 20px;
+      }
+
+      .btn-view-all {
+        width: 100%;
+        max-width: 340px;
+        padding: 16px 24px;
+        font-size: 15px;
+        text-align: center;
+      }
+
+      .skills-section {
+        padding-top: 56px;
+      }
+
+      .skills-header {
+        padding: 0 22px 28px;
+      }
+
+      .skills-title {
+        font-size: 32px;
+      }
+
+      .skill-item {
+        width: 120px;
+        height: 120px;
+      }
+
+      .skill-label {
+        opacity: 1;
+        font-size: 11px;
+      }
+
+      footer {
+        padding: 28px 22px 0;
+      }
+
+      .footer-top {
+        flex-direction: column;
+        gap: 14px;
+        text-align: center;
+      }
+
+      .footer-blobs {
+        height: 90px;
+      }
+
+      .blob {
+        height: 80px;
+      }
+    }
   </style>
 </head>
 
